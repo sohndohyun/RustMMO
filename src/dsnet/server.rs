@@ -237,4 +237,29 @@ impl App {
         }
     }
 
+    pub fn set_str_addr(&mut self, str_addr: &str) -> Result<(), String>{
+        if str_addr.parse::<std::net::SocketAddr>().is_ok() {
+            self.str_addr = str_addr.to_string();
+            Ok(())
+        } else {
+            Err("Invalid address format".to_string())
+        }
+    }
+
+    pub fn set_on_update(&mut self, on_update_cb: fn(u32)) {
+        self.on_update_cb = on_update_cb;
+    }
+
+    pub fn set_on_accept(&mut self, on_accept_cb: fn(u128)) {
+        self.on_accept_cb = on_accept_cb;
+    }
+
+    pub fn set_on_receive(&mut self, on_receive_cb: fn(u128, Vec<u8>)) {
+        self.on_receive_cb = on_receive_cb;
+    }
+
+    pub fn set_on_disconnect(&mut self, on_disconnect_cb: fn(u128)) {
+        self.on_disconnect_cb = on_disconnect_cb;
+    }
+
 }
