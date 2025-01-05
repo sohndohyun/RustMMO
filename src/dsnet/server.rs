@@ -1,0 +1,240 @@
+use std::collections::HashMap;
+use std::time::Instant;
+
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
+use tokio::net::TcpListener;
+use tokio::runtime::Runtime;
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+
+enum NetEvent {
+    Accept {
+        idx: u128,
+        to_send_tx: UnboundedSender<Vec<u8>>,
+    },
+
+    Receive {
+        idx: u128,
+        message: Vec<u8>,
+    },
+
+    Disconnect {
+        idx: u128,
+    },
+}
+
+struct Session {
+    to_send_tx: UnboundedSender<Vec<u8>>,
+}
+
+impl Session {
+    pub fn new(to_send_tx: UnboundedSender<Vec<u8>>) -> Session {
+        Session {
+            to_send_tx 
+        }
+    }
+
+    pub fn send_message(&mut self, message: Vec<u8>) -> Result<(), Box<dyn std::error::Error>>{
+        self.to_send_tx.send(message)?;
+
+        Ok(())
+    }
+}
+
+pub struct App {
+    str_addr: String,
+    on_update_cb: fn(u32), // u32는 deltatime (전에 콜된 시점에서 지금까지의 시간)
+    on_accept_cb: fn(u128),
+    on_receive_cb: fn(u128, Vec<u8>),
+    on_disconnect_cb: fn(u128),
+    sessions: HashMap<u128, Session>,
+}
+
+impl Default for App {
+    fn default() -> Self {
+        fn default_on_update(_: u32) {
+            println!("Default on_update callback triggered.");
+        }
+
+        fn default_on_accept(_: u128) {
+            println!("Default on_accept callback triggered.");
+        }
+
+        fn default_on_receive(_: u128, _: Vec<u8>) {
+            println!("Default on_receive callback triggered.");
+        }
+
+        fn default_on_disconnect(_: u128) {
+            println!("Default on_disconnect callback triggered.");
+        }
+
+        App {
+            str_addr: "127.0.0.1:8080".to_string(),
+            on_update_cb: default_on_update,
+            on_accept_cb: default_on_accept,
+            on_receive_cb: default_on_receive,
+            on_disconnect_cb: default_on_disconnect,
+            sessions: HashMap::new(),
+        }
+    }
+}
+
+impl App {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        // Create the runtime
+        let rt = Runtime::new()?;
+
+        // Spawn the root task
+        rt.block_on(async {
+            let (to_main_tx, to_main_rx) = mpsc::unbounded_channel();
+            let str_addr = self.str_addr.clone();
+
+            tokio::spawn(async move {
+                App::accept_process(str_addr, to_main_tx).await;
+            });
+
+            self.main_process(to_main_rx).await
+        })
+    }
+
+    async fn accept_process(str_addr: String, to_main_tx: UnboundedSender<NetEvent>) {
+        let listener = TcpListener::bind(str_addr).await.unwrap();
+
+        let mut counter: u128 = 0;
+
+        loop {
+            match listener.accept().await {
+                Ok((socket, _)) => {
+                    let (rh, wh) = socket.into_split();
+
+                    // receive process begin
+                    tokio::spawn(Self::receive_process(rh, counter, to_main_tx.clone()));
+
+                    let (to_send_tx, to_send_rx) = mpsc::unbounded_channel();
+                    // send process begin
+                    tokio::spawn(Self::send_process(wh, counter, to_send_rx));
+
+                    // send message to main process
+                    to_main_tx
+                        .send(NetEvent::Accept {
+                            idx: counter,
+                            to_send_tx,
+                        })
+                        .unwrap_or_else(|e| {
+                            eprintln!("Failed to send NetEvent::Accept: {:?}", e);
+                        });
+
+                    counter += 1;
+                }
+                Err(e) => println!("couldn't get client: {:?}", e),
+            }
+        }
+    }
+
+    async fn receive_process(
+        mut rh: OwnedReadHalf,
+        idx: u128,
+        to_main_tx: UnboundedSender<NetEvent>,
+    ) {
+        let mut buf = [0; 4096];
+
+        loop {
+            match rh.read(&mut buf).await {
+                // 정상 종료
+                Ok(0) => {
+                    to_main_tx
+                        .send(NetEvent::Disconnect { idx })
+                        .unwrap_or_else(|e| {
+                            eprintln!("Failed to send NetEvent::Disconnect: {:?}", e);
+                        });
+                    break;
+                }
+                // 오류 발생!
+                Err(e) => {
+                    eprintln!("failed to read from `{}`: {:?}", idx, e);
+                    break;
+                }
+                // 정상적인 읽기 완료 이 안에서 처리 ㄱㄱ
+                Ok(n) => {
+                    // TODO: 여기서 메시지 파싱을 해줘야함
+
+                    to_main_tx
+                        .send(NetEvent::Receive {
+                            idx,
+                            message: buf[0..n].to_vec(),
+                        })
+                        .unwrap_or_else(|e| {
+                            eprintln!("Failed to send NetEvent::Receive: {:?}", e);
+                        });
+                }
+            };
+        }
+    }
+
+    async fn send_process(
+        mut wh: OwnedWriteHalf,
+        idx: u128,
+        mut to_send_rx: UnboundedReceiver<Vec<u8>>,
+    ) {
+        while let Some(message) = to_send_rx.recv().await {
+            // TODO: 여기서 메시지 가공을 해줘야함
+
+            if let Err(e) = wh.write_all(&message).await {
+                eprintln!("failed to write to `{}`: {:?}", idx, e);
+                break;
+            }
+        }
+        // 여기로 나온거면 to_send_rx.recv()가 none이 나온건데
+        // 그럼 send쪽이 없어진거임. (main쪽에 문제가 생겼다는 말)
+        // 로직 종료해주자
+    }
+
+    async fn main_process(
+        &mut self,
+        mut to_main_rx: UnboundedReceiver<NetEvent>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut start = Instant::now();
+
+        while let Some(net_event) = to_main_rx.recv().await {
+            match net_event {
+                NetEvent::Accept { idx, to_send_tx } => self.on_accept(idx, to_send_tx),
+                NetEvent::Receive { idx, message } => self.on_receive(idx, message),
+                NetEvent::Disconnect { idx } => self.on_disconnect(idx),
+            }
+
+            let delta_time = start.elapsed().subsec_millis();
+            (self.on_update_cb)(delta_time);
+
+            start = Instant::now();
+        }
+        Ok(())
+    }
+
+    fn on_accept(&mut self, idx: u128, to_send_tx: UnboundedSender<Vec<u8>>) {
+        self.sessions.insert(idx, Session::new(to_send_tx));
+
+        (self.on_accept_cb)(idx);
+    }
+
+    fn on_receive(&mut self, idx: u128, message: Vec<u8>) {
+        (self.on_receive_cb)(idx, message);
+    }
+
+    fn on_disconnect(&mut self, idx: u128) {
+        (self.on_disconnect_cb)(idx);
+    }
+
+    pub fn send_message(&mut self, idx: u128, message: Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(session) = self.sessions.get_mut(&idx) {
+            session.send_message(message)
+        } else {
+            Err(format!("Session with ID {} not found", idx).into())
+        }
+    }
+
+}

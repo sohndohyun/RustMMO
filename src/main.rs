@@ -1,8 +1,6 @@
+pub mod dsnet;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>>{
-
-    println!("Hello, world!");
-    
-    Ok(())
+fn main() {
+    _ = dsnet::server::App::new()
+        .run();
 }
