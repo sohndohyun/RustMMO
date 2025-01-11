@@ -21,6 +21,7 @@ enum NetEvent {
 
     Disconnect {
         idx: u128,
+        reason: Result<(), std::io::Error>
     },
 }
 
@@ -148,7 +149,7 @@ impl App {
                 // 정상 종료
                 Ok(0) => {
                     to_main_tx
-                        .send(NetEvent::Disconnect { idx })
+                        .send(NetEvent::Disconnect { idx, reason: Ok(()) })
                         .unwrap_or_else(|e| {
                             eprintln!("Failed to send NetEvent::Disconnect: {:?}", e);
                         });
@@ -157,6 +158,11 @@ impl App {
                 // 오류 발생!
                 Err(e) => {
                     eprintln!("failed to read from `{}`: {:?}", idx, e);
+                    to_main_tx
+                        .send(NetEvent::Disconnect { idx, reason: Err(e) })
+                        .unwrap_or_else(|e| {
+                            eprintln!("Failed to send NetEvent::Disconnect: {:?}", e);
+                        });
                     break;
                 }
                 // 정상적인 읽기 완료 이 안에서 처리 ㄱㄱ
@@ -182,6 +188,9 @@ impl App {
         mut to_send_rx: UnboundedReceiver<Vec<u8>>,
     ) {
         while let Some(message) = to_send_rx.recv().await {
+            if message.len() == 0 {
+                break;
+            }
             // TODO: 여기서 메시지 가공을 해줘야함
 
             if let Err(e) = wh.write_all(&message).await {
@@ -190,8 +199,9 @@ impl App {
             }
         }
         // 여기로 나온거면 to_send_rx.recv()가 none이 나온건데
-        // 그럼 send쪽이 없어진거임. (main쪽에 문제가 생겼다는 말)
         // 로직 종료해주자
+        drop(wh); // 여기서 세션이 닫힘
+        to_send_rx.close();
     }
 
     async fn main_process(
@@ -204,7 +214,7 @@ impl App {
             match net_event {
                 NetEvent::Accept { idx, to_send_tx } => self.on_accept(idx, to_send_tx),
                 NetEvent::Receive { idx, message } => self.on_receive(idx, message),
-                NetEvent::Disconnect { idx } => self.on_disconnect(idx),
+                NetEvent::Disconnect { idx, reason: _} => self.on_disconnect(idx),
             }
 
             let delta_time = start.elapsed().subsec_millis();
@@ -226,6 +236,7 @@ impl App {
     }
 
     fn on_disconnect(&mut self, idx: u128) {
+        self.sessions.remove(&idx);
         (self.on_disconnect_cb)(idx);
     }
 
@@ -235,6 +246,14 @@ impl App {
         } else {
             Err(format!("Session with ID {} not found", idx).into())
         }
+    }
+
+    pub fn disconnect(&mut self, idx: u128) -> Result<(), Box<dyn std::error::Error>>{
+        if let Some(session) = self.sessions.get_mut(&idx) {
+
+        } else {
+            Err(format!("Session with ID {} not found", idx).into())
+        } 
     }
 
     pub fn set_str_addr(&mut self, str_addr: &str) -> Result<(), String>{
