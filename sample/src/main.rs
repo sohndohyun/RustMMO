@@ -8,7 +8,7 @@ fn on_accept(_: u128) {
     println!("Default on_accept callback triggered.");
 }
 
-fn on_receive(_: u128, _: Vec<u8>) {
+fn on_receive(idx: u128, message: Vec<u8>) {
     println!("Default on_receive callback triggered.");
 }
 

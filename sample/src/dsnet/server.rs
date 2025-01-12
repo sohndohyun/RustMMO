@@ -21,25 +21,30 @@ enum NetEvent {
 
     Disconnect {
         idx: u128,
-        reason: Result<(), std::io::Error>
     },
 }
-
 struct Session {
+    idx: u128,
+    pending_disconnect: bool,
     to_send_tx: UnboundedSender<Vec<u8>>,
 }
 
 impl Session {
-    pub fn new(to_send_tx: UnboundedSender<Vec<u8>>) -> Session {
+    pub fn new(idx: u128, to_send_tx: UnboundedSender<Vec<u8>>) -> Session {
         Session {
-            to_send_tx 
+            idx,
+            pending_disconnect: false,
+            to_send_tx,
         }
     }
 
-    pub fn send_message(&mut self, message: Vec<u8>) -> Result<(), Box<dyn std::error::Error>>{
-        self.to_send_tx.send(message)?;
-
-        Ok(())
+    pub fn send_message(&mut self, message: Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
+        if self.pending_disconnect == false {
+            self.to_send_tx.send(message)?;
+            Ok(())
+        } else {
+            Err(format!("Session {} is pending disconnect", self.idx).into())
+        }
     }
 }
 
@@ -103,6 +108,27 @@ impl App {
         })
     }
 
+    pub fn send_message(
+        &mut self,
+        idx: u128,
+        message: Vec<u8>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(session) = self.sessions.get_mut(&idx) {
+            session.send_message(message)
+        } else {
+            Err(format!("Session with ID {} not found", idx).into())
+        }
+    }
+
+    pub fn disconnect(&mut self, idx: u128) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(session) = self.sessions.get_mut(&idx) {
+            session.pending_disconnect = true;
+            session.send_message("".into())
+        } else {
+            Err(format!("Session with ID {} not found", idx).into())
+        }
+    }
+
     async fn accept_process(str_addr: String, to_main_tx: UnboundedSender<NetEvent>) {
         let listener = TcpListener::bind(str_addr).await.unwrap();
 
@@ -148,38 +174,40 @@ impl App {
             match rh.read(&mut buf).await {
                 // 정상 종료
                 Ok(0) => {
-                    to_main_tx
-                        .send(NetEvent::Disconnect { idx, reason: Ok(()) })
-                        .unwrap_or_else(|e| {
-                            eprintln!("Failed to send NetEvent::Disconnect: {:?}", e);
-                        });
+                    if let Err(e) = to_main_tx.send(NetEvent::Disconnect {
+                        idx,
+                    }) {
+                        eprintln!("Failed to send NetEvent::Disconnect: {:?}", e);
+                    }
                     break;
                 }
                 // 오류 발생!
                 Err(e) => {
-                    eprintln!("failed to read from `{}`: {:?}", idx, e);
-                    to_main_tx
-                        .send(NetEvent::Disconnect { idx, reason: Err(e) })
-                        .unwrap_or_else(|e| {
-                            eprintln!("Failed to send NetEvent::Disconnect: {:?}", e);
-                        });
+                    eprintln!("Error reading from idx {}: {:?}", idx, e);
+
+                    if let Err(send_err) = to_main_tx.send(NetEvent::Disconnect {
+                        idx,
+                    }) {
+                        eprintln!("Failed to send NetEvent::Disconnect: {:?}", send_err);
+                    }
                     break;
                 }
                 // 정상적인 읽기 완료 이 안에서 처리 ㄱㄱ
                 Ok(n) => {
                     // TODO: 여기서 메시지 파싱을 해줘야함
 
-                    to_main_tx
-                        .send(NetEvent::Receive {
-                            idx,
-                            message: buf[0..n].to_vec(),
-                        })
-                        .unwrap_or_else(|e| {
-                            eprintln!("Failed to send NetEvent::Receive: {:?}", e);
-                        });
+                    if let Err(e) = to_main_tx.send(NetEvent::Receive {
+                        idx,
+                        message: buf[0..n].to_vec(),
+                    }) {
+                        eprintln!("Failed to send NetEvent::Receive: {:?}", e);
+                    }
                 }
             };
         }
+
+        // log...
+        println!("end receive process!");
     }
 
     async fn send_process(
@@ -200,8 +228,10 @@ impl App {
         }
         // 여기로 나온거면 to_send_rx.recv()가 none이 나온건데
         // 로직 종료해주자
-        drop(wh); // 여기서 세션이 닫힘
         to_send_rx.close();
+
+        // log...
+        println!("end send process!");
     }
 
     async fn main_process(
@@ -214,7 +244,7 @@ impl App {
             match net_event {
                 NetEvent::Accept { idx, to_send_tx } => self.on_accept(idx, to_send_tx),
                 NetEvent::Receive { idx, message } => self.on_receive(idx, message),
-                NetEvent::Disconnect { idx, reason: _} => self.on_disconnect(idx),
+                NetEvent::Disconnect { idx, } => self.on_disconnect(idx),
             }
 
             let delta_time = start.elapsed().subsec_millis();
@@ -226,7 +256,7 @@ impl App {
     }
 
     fn on_accept(&mut self, idx: u128, to_send_tx: UnboundedSender<Vec<u8>>) {
-        self.sessions.insert(idx, Session::new(to_send_tx));
+        self.sessions.insert(idx, Session::new(idx, to_send_tx));
 
         (self.on_accept_cb)(idx);
     }
@@ -240,23 +270,7 @@ impl App {
         (self.on_disconnect_cb)(idx);
     }
 
-    pub fn send_message(&mut self, idx: u128, message: Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(session) = self.sessions.get_mut(&idx) {
-            session.send_message(message)
-        } else {
-            Err(format!("Session with ID {} not found", idx).into())
-        }
-    }
-
-    pub fn disconnect(&mut self, idx: u128) -> Result<(), Box<dyn std::error::Error>>{
-        if let Some(session) = self.sessions.get_mut(&idx) {
-
-        } else {
-            Err(format!("Session with ID {} not found", idx).into())
-        } 
-    }
-
-    pub fn set_str_addr(&mut self, str_addr: &str) -> Result<(), String>{
+    pub fn set_str_addr(&mut self, str_addr: &str) -> Result<(), String> {
         if str_addr.parse::<std::net::SocketAddr>().is_ok() {
             self.str_addr = str_addr.to_string();
             Ok(())
@@ -280,5 +294,4 @@ impl App {
     pub fn set_on_disconnect(&mut self, on_disconnect_cb: fn(u128)) {
         self.on_disconnect_cb = on_disconnect_cb;
     }
-
 }
