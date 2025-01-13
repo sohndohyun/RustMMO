@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
@@ -50,28 +50,28 @@ impl Session {
 
 pub struct App {
     str_addr: String,
-    on_update_cb: fn(u32), // u32는 deltatime (전에 콜된 시점에서 지금까지의 시간)
-    on_accept_cb: fn(u128),
-    on_receive_cb: fn(u128, Vec<u8>),
-    on_disconnect_cb: fn(u128),
+    on_update_cb: fn(&mut App, u32), // u32는 deltatime (전에 콜된 시점에서 지금까지의 시간)
+    on_accept_cb: fn(&mut App, u128),
+    on_receive_cb: fn(&mut App, u128, Vec<u8>),
+    on_disconnect_cb: fn(&mut App, u128),
     sessions: HashMap<u128, Session>,
 }
 
 impl Default for App {
     fn default() -> Self {
-        fn default_on_update(_: u32) {
+        fn default_on_update(_: &mut App, _: u32) {
             println!("Default on_update callback triggered.");
         }
 
-        fn default_on_accept(_: u128) {
+        fn default_on_accept(_: &mut App, _: u128) {
             println!("Default on_accept callback triggered.");
         }
 
-        fn default_on_receive(_: u128, _: Vec<u8>) {
+        fn default_on_receive(_: &mut App, _: u128, _: Vec<u8>) {
             println!("Default on_receive callback triggered.");
         }
 
-        fn default_on_disconnect(_: u128) {
+        fn default_on_disconnect(_: &mut App, _: u128) {
             println!("Default on_disconnect callback triggered.");
         }
 
@@ -91,9 +91,9 @@ impl App {
         Self::default()
     }
 
-    pub fn run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run(&mut self) {
         // Create the runtime
-        let rt = Runtime::new()?;
+        let rt = Runtime::new().unwrap();
 
         // Spawn the root task
         rt.block_on(async {
@@ -104,7 +104,7 @@ impl App {
                 App::accept_process(str_addr, to_main_tx).await;
             });
 
-            self.main_process(to_main_rx).await
+            self.main_process(to_main_rx).await;
         })
     }
 
@@ -174,9 +174,7 @@ impl App {
             match rh.read(&mut buf).await {
                 // 정상 종료
                 Ok(0) => {
-                    if let Err(e) = to_main_tx.send(NetEvent::Disconnect {
-                        idx,
-                    }) {
+                    if let Err(e) = to_main_tx.send(NetEvent::Disconnect { idx }) {
                         eprintln!("Failed to send NetEvent::Disconnect: {:?}", e);
                     }
                     break;
@@ -185,9 +183,7 @@ impl App {
                 Err(e) => {
                     eprintln!("Error reading from idx {}: {:?}", idx, e);
 
-                    if let Err(send_err) = to_main_tx.send(NetEvent::Disconnect {
-                        idx,
-                    }) {
+                    if let Err(send_err) = to_main_tx.send(NetEvent::Disconnect { idx }) {
                         eprintln!("Failed to send NetEvent::Disconnect: {:?}", send_err);
                     }
                     break;
@@ -234,40 +230,47 @@ impl App {
         println!("end send process!");
     }
 
-    async fn main_process(
-        &mut self,
-        mut to_main_rx: UnboundedReceiver<NetEvent>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn main_process(&mut self, mut to_main_rx: UnboundedReceiver<NetEvent>) {
         let mut start = Instant::now();
 
-        while let Some(net_event) = to_main_rx.recv().await {
-            match net_event {
-                NetEvent::Accept { idx, to_send_tx } => self.on_accept(idx, to_send_tx),
-                NetEvent::Receive { idx, message } => self.on_receive(idx, message),
-                NetEvent::Disconnect { idx, } => self.on_disconnect(idx),
+        loop {
+            // `try_recv`로 메시지를 비동기적으로 확인
+            match to_main_rx.try_recv() {
+                Ok(net_event) => match net_event {
+                    NetEvent::Accept { idx, to_send_tx } => self.on_accept(idx, to_send_tx),
+                    NetEvent::Receive { idx, message } => self.on_receive(idx, message),
+                    NetEvent::Disconnect { idx } => self.on_disconnect(idx),
+                },
+                Err(try_recv_err) => match try_recv_err {
+                    mpsc::error::TryRecvError::Empty => {},
+                    mpsc::error::TryRecvError::Disconnected => break,
+                }
             }
 
-            let delta_time = start.elapsed().subsec_millis();
-            (self.on_update_cb)(delta_time);
+            // 업데이트 콜백 호출
+            let delta_time = start.elapsed().as_millis() as u32;
+            (self.on_update_cb)(self, delta_time);
 
+            // 새로운 시작 시간으로 갱신
             start = Instant::now();
+
+            tokio::time::sleep(Duration::from_millis(1)).await;
         }
-        Ok(())
     }
 
     fn on_accept(&mut self, idx: u128, to_send_tx: UnboundedSender<Vec<u8>>) {
         self.sessions.insert(idx, Session::new(idx, to_send_tx));
 
-        (self.on_accept_cb)(idx);
+        (self.on_accept_cb)(self, idx);
     }
 
     fn on_receive(&mut self, idx: u128, message: Vec<u8>) {
-        (self.on_receive_cb)(idx, message);
+        (self.on_receive_cb)(self, idx, message);
     }
 
     fn on_disconnect(&mut self, idx: u128) {
         self.sessions.remove(&idx);
-        (self.on_disconnect_cb)(idx);
+        (self.on_disconnect_cb)(self, idx);
     }
 
     pub fn set_str_addr(&mut self, str_addr: &str) -> Result<(), String> {
@@ -279,19 +282,19 @@ impl App {
         }
     }
 
-    pub fn set_on_update(&mut self, on_update_cb: fn(u32)) {
+    pub fn set_on_update(&mut self, on_update_cb: fn(&mut App, u32)) {
         self.on_update_cb = on_update_cb;
     }
 
-    pub fn set_on_accept(&mut self, on_accept_cb: fn(u128)) {
+    pub fn set_on_accept(&mut self, on_accept_cb: fn(&mut App, u128)) {
         self.on_accept_cb = on_accept_cb;
     }
 
-    pub fn set_on_receive(&mut self, on_receive_cb: fn(u128, Vec<u8>)) {
+    pub fn set_on_receive(&mut self, on_receive_cb: fn(&mut App, u128, Vec<u8>)) {
         self.on_receive_cb = on_receive_cb;
     }
 
-    pub fn set_on_disconnect(&mut self, on_disconnect_cb: fn(u128)) {
+    pub fn set_on_disconnect(&mut self, on_disconnect_cb: fn(&mut App, u128)) {
         self.on_disconnect_cb = on_disconnect_cb;
     }
 }
