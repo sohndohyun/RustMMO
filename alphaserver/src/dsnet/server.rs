@@ -8,6 +8,8 @@ use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
+use crate::dsnet::packet::Header;
+
 enum NetEvent {
     Accept {
         idx: u128,
