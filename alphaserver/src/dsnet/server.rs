@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::time::{Duration, Instant};
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -8,12 +8,12 @@ use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-use crate::dsnet::packet::Header;
+use crate::dsnet::packet::message_to_packet;
 
 enum NetEvent {
     Accept {
         idx: u128,
-        to_send_tx: UnboundedSender<Vec<u8>>,
+        to_send_tx: UnboundedSender<(u16, Vec<u8>)>,
     },
 
     Receive {
@@ -28,11 +28,11 @@ enum NetEvent {
 struct Session {
     idx: u128,
     pending_disconnect: bool,
-    to_send_tx: UnboundedSender<Vec<u8>>,
+    to_send_tx: UnboundedSender<(u16, Vec<u8>)>,
 }
 
 impl Session {
-    pub fn new(idx: u128, to_send_tx: UnboundedSender<Vec<u8>>) -> Session {
+    pub fn new(idx: u128, to_send_tx: UnboundedSender<(u16, Vec<u8>)>) -> Session {
         Session {
             idx,
             pending_disconnect: false,
@@ -40,9 +40,9 @@ impl Session {
         }
     }
 
-    pub fn send_message(&mut self, message: Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn send_message(&mut self, packet_type: u16, message: Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
         if self.pending_disconnect == false {
-            self.to_send_tx.send(message)?;
+            self.to_send_tx.send((packet_type, message))?;
             Ok(())
         } else {
             Err(format!("Session {} is pending disconnect", self.idx).into())
@@ -113,10 +113,11 @@ impl App {
     pub fn send_message(
         &mut self,
         idx: u128,
+        packet_type: u16,
         message: Vec<u8>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(session) = self.sessions.get_mut(&idx) {
-            session.send_message(message)
+            session.send_message(packet_type, message)
         } else {
             Err(format!("Session with ID {} not found", idx).into())
         }
@@ -125,7 +126,7 @@ impl App {
     pub fn disconnect(&mut self, idx: u128) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(session) = self.sessions.get_mut(&idx) {
             session.pending_disconnect = true;
-            session.send_message("".into())
+            session.send_message(0, "".into())
         } else {
             Err(format!("Session with ID {} not found", idx).into())
         }
@@ -211,22 +212,34 @@ impl App {
     async fn send_process(
         mut wh: OwnedWriteHalf,
         idx: u128,
-        mut to_send_rx: UnboundedReceiver<Vec<u8>>,
+        mut to_send_rx: UnboundedReceiver<(u16, Vec<u8>)>,
     ) {
-        while let Some(message) = to_send_rx.recv().await {
-            if message.len() == 0 {
+        let mut send_buf: [u8; 1024] = [0; 1024];
+
+        while let Some((packet_type, message)) = to_send_rx.recv().await {
+            if message.is_empty() {
                 break;
             }
-            // TODO: 여기서 메시지 가공을 해줘야함
 
-            if let Err(e) = wh.write_all(&message).await {
-                eprintln!("failed to write to `{}`: {:?}", idx, e);
-                break;
+            // 메시지 가공
+            match message_to_packet(packet_type, &message, &mut send_buf) {
+                Ok(length) => {
+
+                    if let Err(e) = wh.write_all(&send_buf[0..length]).await {
+                        eprintln!("failed to write to `{}`: {:?}", idx, e);
+                        break;
+                    }
+                    
+                },
+                Err(e) => {
+                    eprint!("{}", e);
+                    break;
+                },
             }
         }
         // 여기로 나온거면 to_send_rx.recv()가 none이 나온건데
         // 로직 종료해주자
-        to_send_rx.close();
+        drop(to_send_rx);
 
         // log...
         println!("end send process!");
@@ -260,7 +273,7 @@ impl App {
         }
     }
 
-    fn on_accept(&mut self, idx: u128, to_send_tx: UnboundedSender<Vec<u8>>) {
+    fn on_accept(&mut self, idx: u128, to_send_tx: UnboundedSender<(u16, Vec<u8>)>) {
         self.sessions.insert(idx, Session::new(idx, to_send_tx));
 
         (self.on_accept_cb)(self, idx);

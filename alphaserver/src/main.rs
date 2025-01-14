@@ -3,7 +3,7 @@ pub mod dsnet;
 use crate::dsnet::server::App;
 
 fn on_update(_: &mut App, _: u32) {
-    println!("Default on_update callback triggered.");
+    // println!("Default on_update callback triggered.");
 }
 
 fn on_accept(_: &mut App, _: u128) {
@@ -11,7 +11,7 @@ fn on_accept(_: &mut App, _: u128) {
 }
 
 fn on_receive(app: &mut App, idx: u128, message: Vec<u8>) {
-    _ = app.send_message(idx, message);
+    _ = app.send_message(idx, 0, message);
 }
 
 fn on_disconnect(_: &mut App,_: u128) {

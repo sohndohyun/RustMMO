@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
             }
         };
 
-        let recv_str = str::from_utf8(&recv_buf[0..n])
+        let recv_str = str::from_utf8(&recv_buf[4..n])
             .unwrap_or_else(|_| "invalid UTF-8 sequence returned");
 
         println!("received size: {}", n);
