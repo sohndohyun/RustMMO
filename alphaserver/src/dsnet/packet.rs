@@ -1,26 +1,27 @@
-/* 
+/*
 packet_type: u16,       2byte
 payload_length: u16,    2byte
                         4byte
-*/                      
+*/
 
-const HEADER_SIZE: usize =  4;
+use std::collections::VecDeque;
 
-pub fn message_to_packet(packet_type: u16, message: &Vec<u8>, buffer: &mut [u8; 1024]) -> Result<usize, &'static str> {
-    
-    if message.len() > 1022 {
-        return Err("Message is too large to fit in the buffer");
-    }
-    
+pub fn push_message_with_header(packet_type: u16, message: &Vec<u8>, ring: &mut VecDeque<u8>) {
     // message 크기를 첫 두 바이트에 기록
     let payload_length = message.len() as u16; // 최대 65535 (u16 범위)
-    buffer[0] = (packet_type >> 8) as u8; // 상위 바이트
-    buffer[1] = (packet_type & 0xFF) as u8; // 하위 바이트
-    buffer[2] = (payload_length >> 8) as u8;
-    buffer[3] = (payload_length & 0xFF) as u8;
+    ring.push_back((packet_type >> 8) as u8); // 상위 바이트
+    ring.push_back((packet_type & 0xFF) as u8); // 하위 바이트
+    ring.push_back((payload_length >> 8) as u8); // 상위 바이트
+    ring.push_back((payload_length & 0xFF) as u8); // 하위 바이트
 
-    // message를 buffer에 복사
-    buffer[HEADER_SIZE..(HEADER_SIZE + payload_length as usize)].copy_from_slice(message);
+    ring.extend(message);
+}
 
-    Ok(payload_length as usize + HEADER_SIZE)
+pub fn from_ring_to_array(ring: &VecDeque<u8>, buffer: &mut Vec<u8>) -> usize {
+    buffer.clear();
+    let (bufa, bufb) = ring.as_slices();
+    buffer.extend(bufa);
+    buffer.extend(bufb);
+
+    bufa.len() + bufb.len()
 }

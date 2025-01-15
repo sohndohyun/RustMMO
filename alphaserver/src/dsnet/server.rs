@@ -8,7 +8,7 @@ use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-use crate::dsnet::packet::message_to_packet;
+use crate::dsnet::packet::{from_ring_to_array, push_message_with_header};
 
 enum NetEvent {
     Accept {
@@ -40,7 +40,11 @@ impl Session {
         }
     }
 
-    pub fn send_message(&mut self, packet_type: u16, message: Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn send_message(
+        &mut self,
+        packet_type: u16,
+        message: Vec<u8>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         if self.pending_disconnect == false {
             self.to_send_tx.send((packet_type, message))?;
             Ok(())
@@ -214,35 +218,47 @@ impl App {
         idx: u128,
         mut to_send_rx: UnboundedReceiver<(u16, Vec<u8>)>,
     ) {
-        let mut send_buf: [u8; 1024] = [0; 1024];
+        let mut send_buf = Vec::with_capacity(1024);
+        let mut ring_buf = VecDeque::with_capacity(1024);
+        let mut disconnect_flag = false;
 
-        while let Some((packet_type, message)) = to_send_rx.recv().await {
-            if message.is_empty() {
-                break;
+        while !ring_buf.is_empty() || !disconnect_flag {
+            loop {
+                match to_send_rx.try_recv() {
+                    Ok((packet_type, message)) => {
+                        if message.is_empty() {
+                            disconnect_flag = true;
+                            break;
+                        }
+
+                        push_message_with_header(packet_type, &message, &mut ring_buf);
+                    }
+                    Err(try_recv_err) => match try_recv_err {
+                        mpsc::error::TryRecvError::Disconnected => {
+                            disconnect_flag = true;
+                            break;
+                        }
+                        _ => break,
+                    },
+                }
             }
 
-            // 메시지 가공
-            match message_to_packet(packet_type, &message, &mut send_buf) {
-                Ok(length) => {
-
-                    if let Err(e) = wh.write_all(&send_buf[0..length]).await {
+            if !ring_buf.is_empty() {
+                from_ring_to_array(&ring_buf, &mut send_buf);
+                match wh.write(&send_buf).await {
+                    Ok(send_size) => {
+                        ring_buf.drain(0..send_size);
+                    }
+                    Err(e) => {
                         eprintln!("failed to write to `{}`: {:?}", idx, e);
                         break;
                     }
-                    
-                },
-                Err(e) => {
-                    eprint!("{}", e);
-                    break;
-                },
+                }
             }
         }
-        // 여기로 나온거면 to_send_rx.recv()가 none이 나온건데
-        // 로직 종료해주자
-        drop(to_send_rx);
 
         // log...
-        println!("end send process!");
+        println!("Connection `{}` send process ended", idx);
     }
 
     async fn main_process(&mut self, mut to_main_rx: UnboundedReceiver<NetEvent>) {
@@ -257,9 +273,9 @@ impl App {
                     NetEvent::Disconnect { idx } => self.on_disconnect(idx),
                 },
                 Err(try_recv_err) => match try_recv_err {
-                    mpsc::error::TryRecvError::Empty => {},
+                    mpsc::error::TryRecvError::Empty => (),
                     mpsc::error::TryRecvError::Disconnected => break,
-                }
+                },
             }
 
             // 업데이트 콜백 호출
