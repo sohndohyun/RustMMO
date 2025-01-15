@@ -17,11 +17,17 @@ pub fn push_message_with_header(packet_type: u16, message: &Vec<u8>, ring: &mut 
     ring.extend(message);
 }
 
-pub fn from_ring_to_array(ring: &VecDeque<u8>, buffer: &mut Vec<u8>) -> usize {
-    buffer.clear();
+pub fn from_ring_to_vec<'a>(ring: &'a VecDeque<u8>, buffer: &'a mut Vec<u8>) -> &'a [u8] {
     let (bufa, bufb) = ring.as_slices();
-    buffer.extend(bufa);
-    buffer.extend(bufb);
 
-    bufa.len() + bufb.len()
+    if bufb.is_empty() {
+        bufa
+    } else {
+        buffer.clear();
+        buffer.reserve(bufa.len() + bufb.len());
+        buffer.extend(bufa);
+        buffer.extend(bufb);
+
+        buffer.as_slice()
+    }
 }

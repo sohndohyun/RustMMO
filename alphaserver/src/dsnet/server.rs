@@ -8,7 +8,7 @@ use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-use crate::dsnet::packet::{from_ring_to_array, push_message_with_header};
+use crate::dsnet::packet::{from_ring_to_vec, push_message_with_header};
 
 enum NetEvent {
     Accept {
@@ -218,7 +218,7 @@ impl App {
         idx: u128,
         mut to_send_rx: UnboundedReceiver<(u16, Vec<u8>)>,
     ) {
-        let mut send_buf = Vec::with_capacity(1024);
+        let mut cached_buf = Vec::with_capacity(1024);
         let mut ring_buf = VecDeque::with_capacity(1024);
         let mut disconnect_flag = false;
 
@@ -238,13 +238,13 @@ impl App {
                             disconnect_flag = true;
                             break;
                         }
-                        _ => break,
+                        mpsc::error::TryRecvError::Empty => break,
                     },
                 }
             }
 
             if !ring_buf.is_empty() {
-                from_ring_to_array(&ring_buf, &mut send_buf);
+                let send_buf = from_ring_to_vec(&ring_buf, &mut cached_buf);
                 match wh.write(&send_buf).await {
                     Ok(send_size) => {
                         ring_buf.drain(0..send_size);
