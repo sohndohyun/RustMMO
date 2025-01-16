@@ -23,6 +23,7 @@ pub fn check_and_pop_packet(ring: &mut VecDeque<u8>) -> Option<(u16, Vec<u8>)>{
 
     let mut message = Vec::with_capacity(payload_length);
 
+    // TODO: if front.len() < HEADER_SIZE;
     let front_remaining = front.len() - HEADER_SIZE;
     if front_remaining > 0 {
         let take_from_front = front_remaining.min(payload_length);
