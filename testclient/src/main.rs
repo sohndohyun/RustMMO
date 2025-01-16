@@ -12,7 +12,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
         let mut send_buf = String::new();
         std::io::stdin().read_line(&mut send_buf).unwrap();
 
-        let result = stream.write(send_buf.as_bytes()).await;
+        let message = send_buf.as_bytes();
+        let payload_size = message.len() as u16;
+        let packet_type: u16 = 1;
+
+        let _ = stream.write_u16(payload_size).await;
+        let _ = stream.write_u16(packet_type).await;
+        let result = stream.write_all(message).await;
         println!("send size: {}", send_buf.len());
         println!("wrote to stream; success={:?}", result.is_ok());
 

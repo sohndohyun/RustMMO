@@ -8,7 +8,7 @@ use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-use crate::dsnet::packet::{from_ring_to_vec, push_message_with_header};
+use crate::dsnet::packet::{check_and_pop_packet, from_ring_to_vec, push_message_with_header};
 
 enum NetEvent {
     Accept {
@@ -18,6 +18,7 @@ enum NetEvent {
 
     Receive {
         idx: u128,
+        packet_type: u16,
         message: Vec<u8>,
     },
 
@@ -41,7 +42,7 @@ impl Session {
     }
 
     pub fn send_message(
-        &mut self,
+        &self,
         packet_type: u16,
         message: Vec<u8>,
     ) -> Result<(), Box<dyn std::error::Error>> {
@@ -58,7 +59,7 @@ pub struct App {
     str_addr: String,
     on_update_cb: fn(&mut App, u32), // u32는 deltatime (전에 콜된 시점에서 지금까지의 시간)
     on_accept_cb: fn(&mut App, u128),
-    on_receive_cb: fn(&mut App, u128, Vec<u8>),
+    on_receive_cb: fn(&mut App, u128, u16, Vec<u8>),
     on_disconnect_cb: fn(&mut App, u128),
     sessions: HashMap<u128, Session>,
 }
@@ -73,7 +74,7 @@ impl Default for App {
             println!("Default on_accept callback triggered.");
         }
 
-        fn default_on_receive(_: &mut App, _: u128, _: Vec<u8>) {
+        fn default_on_receive(_: &mut App, _: u128, _: u16, _: Vec<u8>) {
             println!("Default on_receive callback triggered.");
         }
 
@@ -175,10 +176,11 @@ impl App {
         idx: u128,
         to_main_tx: UnboundedSender<NetEvent>,
     ) {
-        let mut buf = [0; 4096];
+        let mut recv_buf = [0; 1024];
+        let mut ring_buf = VecDeque::with_capacity(1024);
 
         loop {
-            match rh.read(&mut buf).await {
+            match rh.read(&mut recv_buf).await {
                 // 정상 종료
                 Ok(0) => {
                     if let Err(e) = to_main_tx.send(NetEvent::Disconnect { idx }) {
@@ -198,12 +200,15 @@ impl App {
                 // 정상적인 읽기 완료 이 안에서 처리 ㄱㄱ
                 Ok(n) => {
                     // TODO: 여기서 메시지 파싱을 해줘야함
-
-                    if let Err(e) = to_main_tx.send(NetEvent::Receive {
-                        idx,
-                        message: buf[0..n].to_vec(),
-                    }) {
-                        eprintln!("Failed to send NetEvent::Receive: {:?}", e);
+                    ring_buf.extend(recv_buf[0..n].iter());
+                    while let Some((packet_type, message)) = check_and_pop_packet(&mut ring_buf){
+                        if let Err(e) = to_main_tx.send(NetEvent::Receive {
+                            idx,
+                            packet_type,
+                            message,
+                        }) {
+                            eprintln!("Failed to send NetEvent::Receive: {:?}", e);
+                        }
                     }
                 }
             };
@@ -220,26 +225,24 @@ impl App {
     ) {
         let mut cached_buf = Vec::with_capacity(1024);
         let mut ring_buf = VecDeque::with_capacity(1024);
-        let mut disconnect_flag = false;
+        let mut active = true;
 
-        while !ring_buf.is_empty() || !disconnect_flag {
-            loop {
+        while active || !ring_buf.is_empty() {
+            if ring_buf.is_empty() {
+                if let Some((packet_type, message)) = to_send_rx.recv().await {
+                    active = push_message_with_header(packet_type, message, &mut ring_buf) > 0;
+                } else {
+                    active = false;
+                }
+            }
+
+            while active {
                 match to_send_rx.try_recv() {
                     Ok((packet_type, message)) => {
-                        if message.is_empty() {
-                            disconnect_flag = true;
-                            break;
-                        }
-
-                        push_message_with_header(packet_type, &message, &mut ring_buf);
+                        active = push_message_with_header(packet_type, message, &mut ring_buf) > 0;
                     }
-                    Err(try_recv_err) => match try_recv_err {
-                        mpsc::error::TryRecvError::Disconnected => {
-                            disconnect_flag = true;
-                            break;
-                        }
-                        mpsc::error::TryRecvError::Empty => break,
-                    },
+                    Err(mpsc::error::TryRecvError::Disconnected) => active = false,
+                    Err(mpsc::error::TryRecvError::Empty) => break,
                 }
             }
 
@@ -269,7 +272,7 @@ impl App {
             match to_main_rx.try_recv() {
                 Ok(net_event) => match net_event {
                     NetEvent::Accept { idx, to_send_tx } => self.on_accept(idx, to_send_tx),
-                    NetEvent::Receive { idx, message } => self.on_receive(idx, message),
+                    NetEvent::Receive { idx, packet_type, message } => self.on_receive(idx, packet_type, message),
                     NetEvent::Disconnect { idx } => self.on_disconnect(idx),
                 },
                 Err(try_recv_err) => match try_recv_err {
@@ -295,8 +298,8 @@ impl App {
         (self.on_accept_cb)(self, idx);
     }
 
-    fn on_receive(&mut self, idx: u128, message: Vec<u8>) {
-        (self.on_receive_cb)(self, idx, message);
+    fn on_receive(&mut self, idx: u128, packet_type: u16, message: Vec<u8>) {
+        (self.on_receive_cb)(self, idx, packet_type, message);
     }
 
     fn on_disconnect(&mut self, idx: u128) {
@@ -321,7 +324,7 @@ impl App {
         self.on_accept_cb = on_accept_cb;
     }
 
-    pub fn set_on_receive(&mut self, on_receive_cb: fn(&mut App, u128, Vec<u8>)) {
+    pub fn set_on_receive(&mut self, on_receive_cb: fn(&mut App, u128, u16, Vec<u8>)) {
         self.on_receive_cb = on_receive_cb;
     }
 
