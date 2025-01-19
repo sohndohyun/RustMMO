@@ -55,18 +55,3 @@ pub fn push_message_with_header(packet_type: u16, message: Vec<u8>, ring: &mut V
         payload_length as usize + HEADER_SIZE
     }
 }
-
-pub fn from_ring_to_vec<'a>(ring: &'a VecDeque<u8>, buffer: &'a mut Vec<u8>) -> &'a [u8] {
-    let (front, back) = ring.as_slices();
-
-    if back.is_empty() {
-        front
-    } else {
-        buffer.clear();
-        buffer.reserve(front.len() + back.len());
-        buffer.extend(front);
-        buffer.extend(back);
-
-        buffer.as_slice()
-    }
-}

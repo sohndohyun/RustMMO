@@ -1,4 +1,5 @@
 use std::collections::{HashMap, VecDeque};
+use std::io::IoSlice;
 use std::time::{Duration, Instant};
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -8,7 +9,7 @@ use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-use crate::dsnet::packet::{check_and_pop_packet, from_ring_to_vec, push_message_with_header};
+use crate::dsnet::packet_functions::*;
 
 enum NetEvent {
     Accept {
@@ -223,7 +224,6 @@ impl App {
         idx: u128,
         mut to_send_rx: UnboundedReceiver<(u16, Vec<u8>)>,
     ) {
-        let mut cached_buf = Vec::with_capacity(1024);
         let mut ring_buf = VecDeque::with_capacity(1024);
         let mut active = true;
 
@@ -247,10 +247,13 @@ impl App {
             }
 
             if !ring_buf.is_empty() {
-                let send_buf = from_ring_to_vec(&ring_buf, &mut cached_buf);
-                match wh.write(&send_buf).await {
+                let (first, second) = ring_buf.as_slices();
+                // 슬라이스를 IoSlice로 감싸기
+                let slices= [IoSlice::new(first), IoSlice::new(second)];
+
+                match wh.write_vectored(&slices).await {
                     Ok(send_size) => {
-                        ring_buf.drain(0..send_size);
+                        ring_buf.drain(..send_size);
                     }
                     Err(e) => {
                         eprintln!("failed to write to `{}`: {:?}", idx, e);
