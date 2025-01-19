@@ -9,33 +9,34 @@ const HEADER_SIZE: usize = 4;
 use std::collections::VecDeque;
 
 pub fn check_and_pop_packet(ring: &mut VecDeque<u8>) -> Option<(u16, Vec<u8>)>{
-    if ring.len() <= HEADER_SIZE {
+    if ring.len() < HEADER_SIZE {
         return None;
     }
 
+    // read header
     let payload_length = u16::from_be_bytes([ring[0], ring[1]]) as usize;
     if ring.len() < HEADER_SIZE + payload_length {
         return None;
     }
     let packet_type = u16::from_be_bytes([ring[2], ring[3]]);
+    ring.drain(..HEADER_SIZE);
+
+
+    // read others;
+    let mut message = Vec::with_capacity(payload_length);
+
 
     let (front, back) = ring.as_slices();
 
-    let mut message = Vec::with_capacity(payload_length);
+    let take_from_front = front.len().min(payload_length);
+    message.extend_from_slice(&front[..take_from_front]);
 
-    // TODO: if front.len() < HEADER_SIZE;
-    let front_remaining = front.len() - HEADER_SIZE;
-    if front_remaining > 0 {
-        let take_from_front = front_remaining.min(payload_length);
-        message.extend_from_slice(&front[HEADER_SIZE..HEADER_SIZE + take_from_front]);
-    }
-
-    let remaining_payload = payload_length - message.len();
+    let remaining_payload = payload_length - take_from_front;
     if remaining_payload > 0 {
         message.extend_from_slice(&back[..remaining_payload]);
     }
 
-    ring.drain(..HEADER_SIZE + payload_length);
+    ring.drain(..payload_length);
 
     Some((packet_type, message))
 }
