@@ -1,0 +1,1 @@
+flatc --gen-all --rust -o schema/generated schema/src/protocol.fbs

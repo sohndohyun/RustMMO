@@ -1,0 +1,6 @@
+namespace Nexus;
+
+table Message {
+    user_idx:uint32;
+    message:string;
+}
