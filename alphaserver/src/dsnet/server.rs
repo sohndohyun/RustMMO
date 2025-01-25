@@ -5,7 +5,6 @@ use std::time::{Duration, Instant};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::TcpListener;
-use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
@@ -27,6 +26,7 @@ enum NetEvent {
         idx: u128,
     },
 }
+
 struct Session {
     idx: u128,
     pending_disconnect: bool,
@@ -99,21 +99,15 @@ impl App {
         Self::default()
     }
 
-    pub fn run(&mut self) {
-        // Create the runtime
-        let rt = Runtime::new().unwrap();
+    pub async fn run(&mut self) {
+        let (to_main_tx, to_main_rx) = mpsc::unbounded_channel();
+        let str_addr = self.str_addr.clone();
 
-        // Spawn the root task
-        rt.block_on(async {
-            let (to_main_tx, to_main_rx) = mpsc::unbounded_channel();
-            let str_addr = self.str_addr.clone();
+        tokio::spawn(async move {
+            App::accept_process(str_addr, to_main_tx).await;
+        });
 
-            tokio::spawn(async move {
-                App::accept_process(str_addr, to_main_tx).await;
-            });
-
-            self.main_process(to_main_rx).await;
-        })
+        self.main_process(to_main_rx).await;
     }
 
     pub fn send_message(
@@ -131,6 +125,9 @@ impl App {
 
     pub fn disconnect(&mut self, idx: u128) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(session) = self.sessions.get_mut(&idx) {
+            if session.pending_disconnect == true {
+                return Ok(());
+            }
             session.pending_disconnect = true;
             session.send_message(0, "".into())
         } else {
@@ -202,7 +199,7 @@ impl App {
                 Ok(n) => {
                     // TODO: 여기서 메시지 파싱을 해줘야함
                     ring_buf.extend(recv_buf[0..n].iter());
-                    while let Some((packet_type, message)) = check_and_pop_packet(&mut ring_buf){
+                    while let Some((packet_type, message)) = check_and_pop_packet(&mut ring_buf) {
                         if let Err(e) = to_main_tx.send(NetEvent::Receive {
                             idx,
                             packet_type,
@@ -249,7 +246,7 @@ impl App {
             if !ring_buf.is_empty() {
                 let (first, second) = ring_buf.as_slices();
                 // 슬라이스를 IoSlice로 감싸기
-                let slices= [IoSlice::new(first), IoSlice::new(second)];
+                let slices = [IoSlice::new(first), IoSlice::new(second)];
 
                 match wh.write_vectored(&slices).await {
                     Ok(send_size) => {
@@ -275,7 +272,11 @@ impl App {
             match to_main_rx.try_recv() {
                 Ok(net_event) => match net_event {
                     NetEvent::Accept { idx, to_send_tx } => self.on_accept(idx, to_send_tx),
-                    NetEvent::Receive { idx, packet_type, message } => self.on_receive(idx, packet_type, message),
+                    NetEvent::Receive {
+                        idx,
+                        packet_type,
+                        message,
+                    } => self.on_receive(idx, packet_type, message),
                     NetEvent::Disconnect { idx } => self.on_disconnect(idx),
                 },
                 Err(try_recv_err) => match try_recv_err {

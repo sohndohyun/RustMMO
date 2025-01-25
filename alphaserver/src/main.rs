@@ -2,7 +2,8 @@ pub mod dsnet;
 
 use crate::dsnet::server::App;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut server_app = App::new();
     if let Err(e) = server_app.set_str_addr("127.0.0.1:8080"){
         eprintln!("{:?}", e);
@@ -14,7 +15,7 @@ fn main() {
     server_app.set_on_receive(on_receive);
     server_app.set_on_disconnect(on_disconnect);
 
-    server_app.run();
+    server_app.run().await;
 }
 
 fn on_update(_: &mut App, _: u32) {
