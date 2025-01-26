@@ -8,7 +8,7 @@ use tokio::net::TcpListener;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-use crate::dsnet::packet_functions::*;
+use crate::packet_functions::*;
 
 enum NetEvent {
     Accept {

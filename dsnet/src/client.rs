@@ -1,5 +1,4 @@
 use std::collections::VecDeque;
-use std::default;
 use std::io::IoSlice;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -8,7 +7,7 @@ use tokio::{net::TcpStream, sync::mpsc};
 
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-use crate::dsnet::packet_functions::*;
+use crate::packet_functions::*;
 
 pub enum Callback {
     Receive {

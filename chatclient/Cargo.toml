@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 egui = "0.30.0"
 tokio = { version = "1.43.0", features = ["full"] }
+dsnet = { path = "../dsnet"}

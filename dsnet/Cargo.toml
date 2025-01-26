@@ -1,0 +1,8 @@
+[package]
+name = "dsnet"
+version = "0.1.0"
+edition = "2021"
+authors = ["dohyun sohn"]
+
+[dependencies]
+tokio = { version = "1.43.0", features = ["full"] }

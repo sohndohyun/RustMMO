@@ -1,6 +1,4 @@
-pub mod dsnet;
-
-use crate::dsnet::server::App;
+use dsnet::server::App;
 
 #[tokio::main]
 async fn main() {
