@@ -1,2 +1,0 @@
- cd testclient
- cargo run

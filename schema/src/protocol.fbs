@@ -1,1 +1,7 @@
 include "message.fbs";
+
+namespace Nexus;
+
+enum PacketType: ushort {
+    MESSAGE = 0
+}

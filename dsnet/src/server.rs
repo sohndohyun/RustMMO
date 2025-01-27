@@ -1,5 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use std::io::IoSlice;
+use std::ops::Deref;
 use std::time::{Duration, Instant};
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -65,8 +66,8 @@ pub struct App {
     sessions: HashMap<u128, Session>,
 }
 
-impl Default for App {
-    fn default() -> Self {
+impl App {
+    pub fn new(str_addr: String) -> Self {
         fn default_on_update(_: &mut App, _: u32) {
             println!("Default on_update callback triggered.");
         }
@@ -84,19 +85,13 @@ impl Default for App {
         }
 
         App {
-            str_addr: "127.0.0.1:8080".to_string(),
+            str_addr,
             on_update_cb: default_on_update,
             on_accept_cb: default_on_accept,
             on_receive_cb: default_on_receive,
             on_disconnect_cb: default_on_disconnect,
             sessions: HashMap::new(),
         }
-    }
-}
-
-impl App {
-    pub fn new() -> Self {
-        Self::default()
     }
 
     pub async fn run(&mut self) {
@@ -311,28 +306,23 @@ impl App {
         (self.on_disconnect_cb)(self, idx);
     }
 
-    pub fn set_str_addr(&mut self, str_addr: &str) -> Result<(), String> {
-        if str_addr.parse::<std::net::SocketAddr>().is_ok() {
-            self.str_addr = str_addr.to_string();
-            Ok(())
-        } else {
-            Err("Invalid address format".to_string())
-        }
-    }
-
-    pub fn set_on_update(&mut self, on_update_cb: fn(&mut App, u32)) {
+    pub fn set_on_update(&mut self, on_update_cb: fn(&mut App, u32)) -> &mut Self {
         self.on_update_cb = on_update_cb;
+        self
     }
 
-    pub fn set_on_accept(&mut self, on_accept_cb: fn(&mut App, u128)) {
+    pub fn set_on_accept(&mut self, on_accept_cb: fn(&mut App, u128)) -> &mut Self{
         self.on_accept_cb = on_accept_cb;
+        self
     }
 
-    pub fn set_on_receive(&mut self, on_receive_cb: fn(&mut App, u128, u16, Vec<u8>)) {
+    pub fn set_on_receive(&mut self, on_receive_cb: fn(&mut App, u128, u16, Vec<u8>)) -> &mut Self {
         self.on_receive_cb = on_receive_cb;
+        self
     }
 
-    pub fn set_on_disconnect(&mut self, on_disconnect_cb: fn(&mut App, u128)) {
+    pub fn set_on_disconnect(&mut self, on_disconnect_cb: fn(&mut App, u128)) -> &mut Self {
         self.on_disconnect_cb = on_disconnect_cb;
+        self
     }
 }
