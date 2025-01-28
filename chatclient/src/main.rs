@@ -121,6 +121,8 @@ impl eframe::App for ChatApp {
                 });
             });
         });
+
+        ctx.request_repaint();
     }
 }
 

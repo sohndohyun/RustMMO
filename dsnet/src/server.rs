@@ -1,7 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use std::io::IoSlice;
-use std::ops::Deref;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
@@ -57,44 +56,27 @@ impl Session {
     }
 }
 
+pub trait Object {
+    fn update(&mut self, app: &mut App, delta_time: u32);
+    fn on_accept(&mut self, app: &mut App, idx: u128);
+    fn on_receive(&mut self, app: &mut App, idx: u128, packet_type: u16, payload: Vec<u8>);
+    fn on_disconnect(&mut self, app: &mut App, idx: u128);
+}
+
 pub struct App {
     str_addr: String,
-    on_update_cb: fn(&mut App, u32), // u32는 deltatime (전에 콜된 시점에서 지금까지의 시간)
-    on_accept_cb: fn(&mut App, u128),
-    on_receive_cb: fn(&mut App, u128, u16, Vec<u8>),
-    on_disconnect_cb: fn(&mut App, u128),
     sessions: HashMap<u128, Session>,
 }
 
 impl App {
     pub fn new(str_addr: String) -> Self {
-        fn default_on_update(_: &mut App, _: u32) {
-            println!("Default on_update callback triggered.");
-        }
-
-        fn default_on_accept(_: &mut App, _: u128) {
-            println!("Default on_accept callback triggered.");
-        }
-
-        fn default_on_receive(_: &mut App, _: u128, _: u16, _: Vec<u8>) {
-            println!("Default on_receive callback triggered.");
-        }
-
-        fn default_on_disconnect(_: &mut App, _: u128) {
-            println!("Default on_disconnect callback triggered.");
-        }
-
         App {
             str_addr,
-            on_update_cb: default_on_update,
-            on_accept_cb: default_on_accept,
-            on_receive_cb: default_on_receive,
-            on_disconnect_cb: default_on_disconnect,
             sessions: HashMap::new(),
         }
     }
 
-    pub async fn run(&mut self) {
+    pub async fn run<T: Object>(&mut self, server_object: T) {
         let (to_main_tx, to_main_rx) = mpsc::unbounded_channel();
         let str_addr = self.str_addr.clone();
 
@@ -102,7 +84,7 @@ impl App {
             App::accept_process(str_addr, to_main_tx).await;
         });
 
-        self.main_process(to_main_rx).await;
+        self.main_process(server_object, to_main_rx).await;
     }
 
     pub fn send_message(
@@ -259,70 +241,38 @@ impl App {
         println!("Connection `{}` send process ended", idx);
     }
 
-    async fn main_process(&mut self, mut to_main_rx: UnboundedReceiver<NetEvent>) {
+    async fn main_process<T: Object>(&mut self, mut server_object: T, mut to_main_rx: UnboundedReceiver<NetEvent>) {
         let mut start = Instant::now();
 
         loop {
             // `try_recv`로 메시지를 비동기적으로 확인
             match to_main_rx.try_recv() {
                 Ok(net_event) => match net_event {
-                    NetEvent::Accept { idx, to_send_tx } => self.on_accept(idx, to_send_tx),
+                    NetEvent::Accept { idx, to_send_tx } => {
+                        self.sessions.insert(idx, Session::new(idx, to_send_tx));
+                        server_object.on_accept(self, idx);
+                    },
                     NetEvent::Receive {
                         idx,
                         packet_type,
                         message,
-                    } => self.on_receive(idx, packet_type, message),
-                    NetEvent::Disconnect { idx } => self.on_disconnect(idx),
+                    } => server_object.on_receive(self, idx, packet_type, message),
+                    NetEvent::Disconnect { idx } => {
+                        self.sessions.remove(&idx);
+                        server_object.on_disconnect(self, idx);
+                    },
                 },
                 Err(try_recv_err) => match try_recv_err {
-                    mpsc::error::TryRecvError::Empty => (),
+                    mpsc::error::TryRecvError::Empty => {
+                        // 업데이트 콜백 호출
+                        let delta_time = start.elapsed().as_millis() as u32;
+                        server_object.update(self, delta_time);
+                        start = Instant::now();
+                    },
                     mpsc::error::TryRecvError::Disconnected => break,
                 },
             }
 
-            // 업데이트 콜백 호출
-            let delta_time = start.elapsed().as_millis() as u32;
-            (self.on_update_cb)(self, delta_time);
-
-            // 새로운 시작 시간으로 갱신
-            start = Instant::now();
-
-            tokio::time::sleep(Duration::from_millis(1)).await;
         }
-    }
-
-    fn on_accept(&mut self, idx: u128, to_send_tx: UnboundedSender<(u16, Vec<u8>)>) {
-        self.sessions.insert(idx, Session::new(idx, to_send_tx));
-
-        (self.on_accept_cb)(self, idx);
-    }
-
-    fn on_receive(&mut self, idx: u128, packet_type: u16, message: Vec<u8>) {
-        (self.on_receive_cb)(self, idx, packet_type, message);
-    }
-
-    fn on_disconnect(&mut self, idx: u128) {
-        self.sessions.remove(&idx);
-        (self.on_disconnect_cb)(self, idx);
-    }
-
-    pub fn set_on_update(&mut self, on_update_cb: fn(&mut App, u32)) -> &mut Self {
-        self.on_update_cb = on_update_cb;
-        self
-    }
-
-    pub fn set_on_accept(&mut self, on_accept_cb: fn(&mut App, u128)) -> &mut Self{
-        self.on_accept_cb = on_accept_cb;
-        self
-    }
-
-    pub fn set_on_receive(&mut self, on_receive_cb: fn(&mut App, u128, u16, Vec<u8>)) -> &mut Self {
-        self.on_receive_cb = on_receive_cb;
-        self
-    }
-
-    pub fn set_on_disconnect(&mut self, on_disconnect_cb: fn(&mut App, u128)) -> &mut Self {
-        self.on_disconnect_cb = on_disconnect_cb;
-        self
     }
 }
