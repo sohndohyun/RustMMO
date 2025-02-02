@@ -56,35 +56,34 @@ impl Session {
     }
 }
 
-pub trait Object {
-    fn update(&mut self, app: &mut App, delta_time: u32);
-    fn on_accept(&mut self, app: &mut App, idx: u128);
-    fn on_receive(&mut self, app: &mut App, idx: u128, packet_type: u16, payload: Vec<u8>);
-    fn on_disconnect(&mut self, app: &mut App, idx: u128);
-}
-
 pub struct App {
-    str_addr: String,
     sessions: HashMap<u128, Session>,
+
+    update_callback: Box<dyn FnMut(u32)>,
+    on_accept_callback: Box<dyn FnMut(u128)>,
+    on_receive_callback: Box<dyn FnMut(u128, u16, Vec<u8>)>,
+    on_disconnect_callback: Box<dyn FnMut(u128)>,
 }
 
 impl App {
-    pub fn new(str_addr: String) -> Self {
-        App {
-            str_addr,
+    pub fn new() -> Self {
+        Self {
             sessions: HashMap::new(),
+            update_callback: Box::new(|_| {}),
+            on_accept_callback: Box::new(|_| {}),
+            on_receive_callback: Box::new(|_, _, _| {}),
+            on_disconnect_callback: Box::new(|_| {}),
         }
     }
 
-    pub async fn run<T: Object>(&mut self, server_object: T) {
+    pub async fn run(&mut self, str_addr: String) {
         let (to_main_tx, to_main_rx) = mpsc::unbounded_channel();
-        let str_addr = self.str_addr.clone();
 
         tokio::spawn(async move {
             App::accept_process(str_addr, to_main_tx).await;
         });
 
-        self.main_process(server_object, to_main_rx).await;
+        self.main_process(to_main_rx).await;
     }
 
     pub fn send_message(
@@ -110,6 +109,34 @@ impl App {
         } else {
             Err(format!("Session with ID {} not found", idx).into())
         }
+    }
+
+    pub fn set_update_callback<F>(&mut self, callback: F)
+    where
+        F: FnMut(u32) + 'static,
+    {
+        self.update_callback = Box::new(callback);
+    }
+
+    pub fn set_on_accept_callback<F>(&mut self, callback: F)
+    where
+        F: FnMut(u128) + 'static,
+    {
+        self.on_accept_callback = Box::new(callback);
+    }
+
+    pub fn set_on_receive_callback<F>(&mut self, callback: F)
+    where
+        F: FnMut(u128, u16, Vec<u8>) + 'static,
+    {
+        self.on_receive_callback = Box::new(callback);
+    }
+
+    pub fn set_on_disconnect_callback<F>(&mut self, callback: F)
+    where
+        F: FnMut(u128) + 'static,
+    {
+        self.on_disconnect_callback = Box::new(callback);
     }
 
     async fn accept_process(str_addr: String, to_main_tx: UnboundedSender<NetEvent>) {
@@ -241,7 +268,7 @@ impl App {
         println!("Connection `{}` send process ended", idx);
     }
 
-    async fn main_process<T: Object>(&mut self, mut server_object: T, mut to_main_rx: UnboundedReceiver<NetEvent>) {
+    async fn main_process(&mut self, mut to_main_rx: UnboundedReceiver<NetEvent>) {
         let mut start = Instant::now();
 
         loop {
@@ -250,29 +277,28 @@ impl App {
                 Ok(net_event) => match net_event {
                     NetEvent::Accept { idx, to_send_tx } => {
                         self.sessions.insert(idx, Session::new(idx, to_send_tx));
-                        server_object.on_accept(self, idx);
-                    },
+                        (self.on_accept_callback)(idx);
+                    }
                     NetEvent::Receive {
                         idx,
                         packet_type,
                         message,
-                    } => server_object.on_receive(self, idx, packet_type, message),
+                    } => (self.on_receive_callback)(idx, packet_type, message),
                     NetEvent::Disconnect { idx } => {
                         self.sessions.remove(&idx);
-                        server_object.on_disconnect(self, idx);
-                    },
+                        (self.on_disconnect_callback)(idx);
+                    }
                 },
                 Err(try_recv_err) => match try_recv_err {
                     mpsc::error::TryRecvError::Empty => {
                         // 업데이트 콜백 호출
                         let delta_time = start.elapsed().as_millis() as u32;
-                        server_object.update(self, delta_time);
+                        (self.update_callback)(delta_time);
                         start = Instant::now();
-                    },
+                    }
                     mpsc::error::TryRecvError::Disconnected => break,
                 },
             }
-
         }
     }
 }
