@@ -1,8 +1,0 @@
-namespace Nexus;
-
-table Message {
-    name:string;
-    message:string;
-}
-
-root_type Message;

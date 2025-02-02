@@ -1,0 +1,18 @@
+include "result.fbs";
+include "structs.fbs";
+
+namespace Nexus;
+
+table CG_LOGIN_REQ {
+    name:string;
+    color:Color;
+}
+
+table GC_LOGIN_RES {
+    actorIdx:ulong;
+    result:Result;
+}
+
+table GC_UPSERT_ACTOR_NOTI {
+    actors: [WorldActorInfo];
+}

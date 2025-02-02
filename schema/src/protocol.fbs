@@ -1,7 +1,9 @@
-include "message.fbs";
+include "packets.fbs";
 
 namespace Nexus;
 
 enum PacketType: ushort {
-    MESSAGE = 0
+    CG_LOGIN_REQ = 0,
+    GC_LOGIN_RES,
+    GC_UPSERT_ACTOR_NOTI
 }
