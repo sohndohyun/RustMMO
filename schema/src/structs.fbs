@@ -10,11 +10,3 @@ struct Vec2 {
     x: float;
     y: float;
 }
-
-struct WorldActorInfo {
-    actorIdx: ulong;
-    position: Vec2;
-    moveSpeed: float;
-    direction: Vec2;
-    color: Color;
-}

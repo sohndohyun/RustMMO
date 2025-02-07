@@ -3,11 +3,11 @@
 
 // @generated
 
-use core::mem;
-use core::cmp::Ordering;
+//use core::mem;
+//use core::cmp::Ordering;
 
 extern crate flatbuffers;
-use self::flatbuffers::{EndianScalar, Follow};
+//use self::flatbuffers::{EndianScalar, Follow};
 
 #[allow(unused_imports, dead_code)]
 pub mod nexus {
@@ -19,21 +19,21 @@ pub mod nexus {
   use self::flatbuffers::{EndianScalar, Follow};
 
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_RESULT: u64 = 0;
+pub const ENUM_MIN_SERVER_CODE: u64 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_RESULT: u64 = 1;
+pub const ENUM_MAX_SERVER_CODE: u64 = 1;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_RESULT: [Result; 2] = [
-  Result::SUCCESS,
-  Result::FAILED,
+pub const ENUM_VALUES_SERVER_CODE: [ServerCode; 2] = [
+  ServerCode::SUCCESS,
+  ServerCode::FAILED,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[repr(transparent)]
-pub struct Result(pub u64);
+pub struct ServerCode(pub u64);
 #[allow(non_upper_case_globals)]
-impl Result {
+impl ServerCode {
   pub const SUCCESS: Self = Self(0);
   pub const FAILED: Self = Self(1);
 
@@ -52,7 +52,7 @@ impl Result {
     }
   }
 }
-impl core::fmt::Debug for Result {
+impl core::fmt::Debug for ServerCode {
   fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
     if let Some(name) = self.variant_name() {
       f.write_str(name)
@@ -61,7 +61,7 @@ impl core::fmt::Debug for Result {
     }
   }
 }
-impl<'a> flatbuffers::Follow<'a> for Result {
+impl<'a> flatbuffers::Follow<'a> for ServerCode {
   type Inner = Self;
   #[inline]
   unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
@@ -70,15 +70,15 @@ impl<'a> flatbuffers::Follow<'a> for Result {
   }
 }
 
-impl flatbuffers::Push for Result {
-    type Output = Result;
+impl flatbuffers::Push for ServerCode {
+    type Output = ServerCode;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         flatbuffers::emplace_scalar::<u64>(dst, self.0);
     }
 }
 
-impl flatbuffers::EndianScalar for Result {
+impl flatbuffers::EndianScalar for ServerCode {
   type Scalar = u64;
   #[inline]
   fn to_little_endian(self) -> u64 {
@@ -92,7 +92,7 @@ impl flatbuffers::EndianScalar for Result {
   }
 }
 
-impl<'a> flatbuffers::Verifiable for Result {
+impl<'a> flatbuffers::Verifiable for ServerCode {
   #[inline]
   fn run_verifier(
     v: &mut flatbuffers::Verifier, pos: usize
@@ -102,7 +102,7 @@ impl<'a> flatbuffers::Verifiable for Result {
   }
 }
 
-impl flatbuffers::SimpleToVerifyInSlice for Result {}
+impl flatbuffers::SimpleToVerifyInSlice for ServerCode {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_PACKET_TYPE: u16 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
@@ -480,208 +480,35 @@ impl<'a> Vec2 {
 
 }
 
-// struct WorldActorInfo, aligned to 8
-#[repr(transparent)]
-#[derive(Clone, Copy, PartialEq)]
-pub struct WorldActorInfo(pub [u8; 32]);
-impl Default for WorldActorInfo { 
-  fn default() -> Self { 
-    Self([0; 32])
-  }
-}
-impl core::fmt::Debug for WorldActorInfo {
-  fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-    f.debug_struct("WorldActorInfo")
-      .field("actorIdx", &self.actorIdx())
-      .field("position", &self.position())
-      .field("moveSpeed", &self.moveSpeed())
-      .field("direction", &self.direction())
-      .field("color", &self.color())
-      .finish()
-  }
-}
-
-impl flatbuffers::SimpleToVerifyInSlice for WorldActorInfo {}
-impl<'a> flatbuffers::Follow<'a> for WorldActorInfo {
-  type Inner = &'a WorldActorInfo;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    <&'a WorldActorInfo>::follow(buf, loc)
-  }
-}
-impl<'a> flatbuffers::Follow<'a> for &'a WorldActorInfo {
-  type Inner = &'a WorldActorInfo;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    flatbuffers::follow_cast_ref::<WorldActorInfo>(buf, loc)
-  }
-}
-impl<'b> flatbuffers::Push for WorldActorInfo {
-    type Output = WorldActorInfo;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        let src = ::core::slice::from_raw_parts(self as *const WorldActorInfo as *const u8, <Self as flatbuffers::Push>::size());
-        dst.copy_from_slice(src);
-    }
-    #[inline]
-    fn alignment() -> flatbuffers::PushAlignment {
-        flatbuffers::PushAlignment::new(8)
-    }
-}
-
-impl<'a> flatbuffers::Verifiable for WorldActorInfo {
-  #[inline]
-  fn run_verifier(
-    v: &mut flatbuffers::Verifier, pos: usize
-  ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-    use self::flatbuffers::Verifiable;
-    v.in_buffer::<Self>(pos)
-  }
-}
-
-impl<'a> WorldActorInfo {
-  #[allow(clippy::too_many_arguments)]
-  pub fn new(
-    actorIdx: u64,
-    position: &Vec2,
-    moveSpeed: f32,
-    direction: &Vec2,
-    color: &Color,
-  ) -> Self {
-    let mut s = Self([0; 32]);
-    s.set_actorIdx(actorIdx);
-    s.set_position(position);
-    s.set_moveSpeed(moveSpeed);
-    s.set_direction(direction);
-    s.set_color(color);
-    s
-  }
-
-  pub fn actorIdx(&self) -> u64 {
-    let mut mem = core::mem::MaybeUninit::<<u64 as EndianScalar>::Scalar>::uninit();
-    // Safety:
-    // Created from a valid Table for this object
-    // Which contains a valid value in this slot
-    EndianScalar::from_little_endian(unsafe {
-      core::ptr::copy_nonoverlapping(
-        self.0[0..].as_ptr(),
-        mem.as_mut_ptr() as *mut u8,
-        core::mem::size_of::<<u64 as EndianScalar>::Scalar>(),
-      );
-      mem.assume_init()
-    })
-  }
-
-  pub fn set_actorIdx(&mut self, x: u64) {
-    let x_le = x.to_little_endian();
-    // Safety:
-    // Created from a valid Table for this object
-    // Which contains a valid value in this slot
-    unsafe {
-      core::ptr::copy_nonoverlapping(
-        &x_le as *const _ as *const u8,
-        self.0[0..].as_mut_ptr(),
-        core::mem::size_of::<<u64 as EndianScalar>::Scalar>(),
-      );
-    }
-  }
-
-  pub fn position(&self) -> &Vec2 {
-    // Safety:
-    // Created from a valid Table for this object
-    // Which contains a valid struct in this slot
-    unsafe { &*(self.0[8..].as_ptr() as *const Vec2) }
-  }
-
-  #[allow(clippy::identity_op)]
-  pub fn set_position(&mut self, x: &Vec2) {
-    self.0[8..8 + 8].copy_from_slice(&x.0)
-  }
-
-  pub fn moveSpeed(&self) -> f32 {
-    let mut mem = core::mem::MaybeUninit::<<f32 as EndianScalar>::Scalar>::uninit();
-    // Safety:
-    // Created from a valid Table for this object
-    // Which contains a valid value in this slot
-    EndianScalar::from_little_endian(unsafe {
-      core::ptr::copy_nonoverlapping(
-        self.0[16..].as_ptr(),
-        mem.as_mut_ptr() as *mut u8,
-        core::mem::size_of::<<f32 as EndianScalar>::Scalar>(),
-      );
-      mem.assume_init()
-    })
-  }
-
-  pub fn set_moveSpeed(&mut self, x: f32) {
-    let x_le = x.to_little_endian();
-    // Safety:
-    // Created from a valid Table for this object
-    // Which contains a valid value in this slot
-    unsafe {
-      core::ptr::copy_nonoverlapping(
-        &x_le as *const _ as *const u8,
-        self.0[16..].as_mut_ptr(),
-        core::mem::size_of::<<f32 as EndianScalar>::Scalar>(),
-      );
-    }
-  }
-
-  pub fn direction(&self) -> &Vec2 {
-    // Safety:
-    // Created from a valid Table for this object
-    // Which contains a valid struct in this slot
-    unsafe { &*(self.0[20..].as_ptr() as *const Vec2) }
-  }
-
-  #[allow(clippy::identity_op)]
-  pub fn set_direction(&mut self, x: &Vec2) {
-    self.0[20..20 + 8].copy_from_slice(&x.0)
-  }
-
-  pub fn color(&self) -> &Color {
-    // Safety:
-    // Created from a valid Table for this object
-    // Which contains a valid struct in this slot
-    unsafe { &*(self.0[28..].as_ptr() as *const Color) }
-  }
-
-  #[allow(clippy::identity_op)]
-  pub fn set_color(&mut self, x: &Color) {
-    self.0[28..28 + 3].copy_from_slice(&x.0)
-  }
-
-}
-
-pub enum CG_LOGIN_REQOffset {}
+pub enum CGLoginReqOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
-pub struct CG_LOGIN_REQ<'a> {
+pub struct CGLoginReq<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for CG_LOGIN_REQ<'a> {
-  type Inner = CG_LOGIN_REQ<'a>;
+impl<'a> flatbuffers::Follow<'a> for CGLoginReq<'a> {
+  type Inner = CGLoginReq<'a>;
   #[inline]
   unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
     Self { _tab: flatbuffers::Table::new(buf, loc) }
   }
 }
 
-impl<'a> CG_LOGIN_REQ<'a> {
+impl<'a> CGLoginReq<'a> {
   pub const VT_NAME: flatbuffers::VOffsetT = 4;
   pub const VT_COLOR: flatbuffers::VOffsetT = 6;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-    CG_LOGIN_REQ { _tab: table }
+    CGLoginReq { _tab: table }
   }
   #[allow(unused_mut)]
   pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
     _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args CG_LOGIN_REQArgs<'args>
-  ) -> flatbuffers::WIPOffset<CG_LOGIN_REQ<'bldr>> {
-    let mut builder = CG_LOGIN_REQBuilder::new(_fbb);
+    args: &'args CGLoginReqArgs<'args>
+  ) -> flatbuffers::WIPOffset<CGLoginReq<'bldr>> {
+    let mut builder = CGLoginReqBuilder::new(_fbb);
     if let Some(x) = args.color { builder.add_color(x); }
     if let Some(x) = args.name { builder.add_name(x); }
     builder.finish()
@@ -693,18 +520,18 @@ impl<'a> CG_LOGIN_REQ<'a> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(CG_LOGIN_REQ::VT_NAME, None)}
+    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(CGLoginReq::VT_NAME, None)}
   }
   #[inline]
   pub fn color(&self) -> Option<&'a Color> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<Color>(CG_LOGIN_REQ::VT_COLOR, None)}
+    unsafe { self._tab.get::<Color>(CGLoginReq::VT_COLOR, None)}
   }
 }
 
-impl flatbuffers::Verifiable for CG_LOGIN_REQ<'_> {
+impl flatbuffers::Verifiable for CGLoginReq<'_> {
   #[inline]
   fn run_verifier(
     v: &mut flatbuffers::Verifier, pos: usize
@@ -717,264 +544,623 @@ impl flatbuffers::Verifiable for CG_LOGIN_REQ<'_> {
     Ok(())
   }
 }
-pub struct CG_LOGIN_REQArgs<'a> {
+pub struct CGLoginReqArgs<'a> {
     pub name: Option<flatbuffers::WIPOffset<&'a str>>,
     pub color: Option<&'a Color>,
 }
-impl<'a> Default for CG_LOGIN_REQArgs<'a> {
+impl<'a> Default for CGLoginReqArgs<'a> {
   #[inline]
   fn default() -> Self {
-    CG_LOGIN_REQArgs {
+    CGLoginReqArgs {
       name: None,
       color: None,
     }
   }
 }
 
-pub struct CG_LOGIN_REQBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+pub struct CGLoginReqBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> CG_LOGIN_REQBuilder<'a, 'b, A> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> CGLoginReqBuilder<'a, 'b, A> {
   #[inline]
   pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(CG_LOGIN_REQ::VT_NAME, name);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(CGLoginReq::VT_NAME, name);
   }
   #[inline]
   pub fn add_color(&mut self, color: &Color) {
-    self.fbb_.push_slot_always::<&Color>(CG_LOGIN_REQ::VT_COLOR, color);
+    self.fbb_.push_slot_always::<&Color>(CGLoginReq::VT_COLOR, color);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> CG_LOGIN_REQBuilder<'a, 'b, A> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> CGLoginReqBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
-    CG_LOGIN_REQBuilder {
+    CGLoginReqBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<CG_LOGIN_REQ<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<CGLoginReq<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
 }
 
-impl core::fmt::Debug for CG_LOGIN_REQ<'_> {
+impl core::fmt::Debug for CGLoginReq<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    let mut ds = f.debug_struct("CG_LOGIN_REQ");
+    let mut ds = f.debug_struct("CGLoginReq");
       ds.field("name", &self.name());
       ds.field("color", &self.color());
       ds.finish()
   }
 }
-pub enum GC_LOGIN_RESOffset {}
+pub enum GCLoginResOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
-pub struct GC_LOGIN_RES<'a> {
+pub struct GCLoginRes<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for GC_LOGIN_RES<'a> {
-  type Inner = GC_LOGIN_RES<'a>;
+impl<'a> flatbuffers::Follow<'a> for GCLoginRes<'a> {
+  type Inner = GCLoginRes<'a>;
   #[inline]
   unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
     Self { _tab: flatbuffers::Table::new(buf, loc) }
   }
 }
 
-impl<'a> GC_LOGIN_RES<'a> {
-  pub const VT_ACTORIDX: flatbuffers::VOffsetT = 4;
+impl<'a> GCLoginRes<'a> {
+  pub const VT_ACTOR_IDX: flatbuffers::VOffsetT = 4;
   pub const VT_RESULT: flatbuffers::VOffsetT = 6;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-    GC_LOGIN_RES { _tab: table }
+    GCLoginRes { _tab: table }
   }
   #[allow(unused_mut)]
   pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
     _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args GC_LOGIN_RESArgs
-  ) -> flatbuffers::WIPOffset<GC_LOGIN_RES<'bldr>> {
-    let mut builder = GC_LOGIN_RESBuilder::new(_fbb);
+    args: &'args GCLoginResArgs
+  ) -> flatbuffers::WIPOffset<GCLoginRes<'bldr>> {
+    let mut builder = GCLoginResBuilder::new(_fbb);
     builder.add_result(args.result);
-    builder.add_actorIdx(args.actorIdx);
+    builder.add_actor_idx(args.actor_idx);
     builder.finish()
   }
 
 
   #[inline]
-  pub fn actorIdx(&self) -> u64 {
+  pub fn actor_idx(&self) -> u64 {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<u64>(GC_LOGIN_RES::VT_ACTORIDX, Some(0)).unwrap()}
+    unsafe { self._tab.get::<u64>(GCLoginRes::VT_ACTOR_IDX, Some(0)).unwrap()}
   }
   #[inline]
-  pub fn result(&self) -> Result {
+  pub fn result(&self) -> ServerCode {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<Result>(GC_LOGIN_RES::VT_RESULT, Some(Result::SUCCESS)).unwrap()}
+    unsafe { self._tab.get::<ServerCode>(GCLoginRes::VT_RESULT, Some(ServerCode::SUCCESS)).unwrap()}
   }
 }
 
-impl flatbuffers::Verifiable for GC_LOGIN_RES<'_> {
+impl flatbuffers::Verifiable for GCLoginRes<'_> {
   #[inline]
   fn run_verifier(
     v: &mut flatbuffers::Verifier, pos: usize
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
-     .visit_field::<u64>("actorIdx", Self::VT_ACTORIDX, false)?
-     .visit_field::<Result>("result", Self::VT_RESULT, false)?
+     .visit_field::<u64>("actor_idx", Self::VT_ACTOR_IDX, false)?
+     .visit_field::<ServerCode>("result", Self::VT_RESULT, false)?
      .finish();
     Ok(())
   }
 }
-pub struct GC_LOGIN_RESArgs {
-    pub actorIdx: u64,
-    pub result: Result,
+pub struct GCLoginResArgs {
+    pub actor_idx: u64,
+    pub result: ServerCode,
 }
-impl<'a> Default for GC_LOGIN_RESArgs {
+impl<'a> Default for GCLoginResArgs {
   #[inline]
   fn default() -> Self {
-    GC_LOGIN_RESArgs {
-      actorIdx: 0,
-      result: Result::SUCCESS,
+    GCLoginResArgs {
+      actor_idx: 0,
+      result: ServerCode::SUCCESS,
     }
   }
 }
 
-pub struct GC_LOGIN_RESBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+pub struct GCLoginResBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GC_LOGIN_RESBuilder<'a, 'b, A> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCLoginResBuilder<'a, 'b, A> {
   #[inline]
-  pub fn add_actorIdx(&mut self, actorIdx: u64) {
-    self.fbb_.push_slot::<u64>(GC_LOGIN_RES::VT_ACTORIDX, actorIdx, 0);
+  pub fn add_actor_idx(&mut self, actor_idx: u64) {
+    self.fbb_.push_slot::<u64>(GCLoginRes::VT_ACTOR_IDX, actor_idx, 0);
   }
   #[inline]
-  pub fn add_result(&mut self, result: Result) {
-    self.fbb_.push_slot::<Result>(GC_LOGIN_RES::VT_RESULT, result, Result::SUCCESS);
+  pub fn add_result(&mut self, result: ServerCode) {
+    self.fbb_.push_slot::<ServerCode>(GCLoginRes::VT_RESULT, result, ServerCode::SUCCESS);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> GC_LOGIN_RESBuilder<'a, 'b, A> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> GCLoginResBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
-    GC_LOGIN_RESBuilder {
+    GCLoginResBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<GC_LOGIN_RES<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<GCLoginRes<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
 }
 
-impl core::fmt::Debug for GC_LOGIN_RES<'_> {
+impl core::fmt::Debug for GCLoginRes<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    let mut ds = f.debug_struct("GC_LOGIN_RES");
-      ds.field("actorIdx", &self.actorIdx());
+    let mut ds = f.debug_struct("GCLoginRes");
+      ds.field("actor_idx", &self.actor_idx());
       ds.field("result", &self.result());
       ds.finish()
   }
 }
-pub enum GC_UPSERT_ACTOR_NOTIOffset {}
+pub enum GCSpawnActorNotiOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
-pub struct GC_UPSERT_ACTOR_NOTI<'a> {
+pub struct GCSpawnActorNoti<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for GC_UPSERT_ACTOR_NOTI<'a> {
-  type Inner = GC_UPSERT_ACTOR_NOTI<'a>;
+impl<'a> flatbuffers::Follow<'a> for GCSpawnActorNoti<'a> {
+  type Inner = GCSpawnActorNoti<'a>;
   #[inline]
   unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
     Self { _tab: flatbuffers::Table::new(buf, loc) }
   }
 }
 
-impl<'a> GC_UPSERT_ACTOR_NOTI<'a> {
-  pub const VT_ACTORS: flatbuffers::VOffsetT = 4;
+impl<'a> GCSpawnActorNoti<'a> {
+  pub const VT_ACTOR_IDX: flatbuffers::VOffsetT = 4;
+  pub const VT_COLOR: flatbuffers::VOffsetT = 6;
+  pub const VT_POSITION: flatbuffers::VOffsetT = 8;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-    GC_UPSERT_ACTOR_NOTI { _tab: table }
+    GCSpawnActorNoti { _tab: table }
   }
   #[allow(unused_mut)]
   pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
     _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args GC_UPSERT_ACTOR_NOTIArgs<'args>
-  ) -> flatbuffers::WIPOffset<GC_UPSERT_ACTOR_NOTI<'bldr>> {
-    let mut builder = GC_UPSERT_ACTOR_NOTIBuilder::new(_fbb);
-    if let Some(x) = args.actors { builder.add_actors(x); }
+    args: &'args GCSpawnActorNotiArgs<'args>
+  ) -> flatbuffers::WIPOffset<GCSpawnActorNoti<'bldr>> {
+    let mut builder = GCSpawnActorNotiBuilder::new(_fbb);
+    builder.add_actor_idx(args.actor_idx);
+    if let Some(x) = args.position { builder.add_position(x); }
+    if let Some(x) = args.color { builder.add_color(x); }
     builder.finish()
   }
 
 
   #[inline]
-  pub fn actors(&self) -> Option<flatbuffers::Vector<'a, WorldActorInfo>> {
+  pub fn actor_idx(&self) -> u64 {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, WorldActorInfo>>>(GC_UPSERT_ACTOR_NOTI::VT_ACTORS, None)}
+    unsafe { self._tab.get::<u64>(GCSpawnActorNoti::VT_ACTOR_IDX, Some(0)).unwrap()}
+  }
+  #[inline]
+  pub fn color(&self) -> Option<&'a Color> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<Color>(GCSpawnActorNoti::VT_COLOR, None)}
+  }
+  #[inline]
+  pub fn position(&self) -> Option<&'a Vec2> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<Vec2>(GCSpawnActorNoti::VT_POSITION, None)}
   }
 }
 
-impl flatbuffers::Verifiable for GC_UPSERT_ACTOR_NOTI<'_> {
+impl flatbuffers::Verifiable for GCSpawnActorNoti<'_> {
   #[inline]
   fn run_verifier(
     v: &mut flatbuffers::Verifier, pos: usize
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
-     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, WorldActorInfo>>>("actors", Self::VT_ACTORS, false)?
+     .visit_field::<u64>("actor_idx", Self::VT_ACTOR_IDX, false)?
+     .visit_field::<Color>("color", Self::VT_COLOR, false)?
+     .visit_field::<Vec2>("position", Self::VT_POSITION, false)?
      .finish();
     Ok(())
   }
 }
-pub struct GC_UPSERT_ACTOR_NOTIArgs<'a> {
-    pub actors: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, WorldActorInfo>>>,
+pub struct GCSpawnActorNotiArgs<'a> {
+    pub actor_idx: u64,
+    pub color: Option<&'a Color>,
+    pub position: Option<&'a Vec2>,
 }
-impl<'a> Default for GC_UPSERT_ACTOR_NOTIArgs<'a> {
+impl<'a> Default for GCSpawnActorNotiArgs<'a> {
   #[inline]
   fn default() -> Self {
-    GC_UPSERT_ACTOR_NOTIArgs {
-      actors: None,
+    GCSpawnActorNotiArgs {
+      actor_idx: 0,
+      color: None,
+      position: None,
     }
   }
 }
 
-pub struct GC_UPSERT_ACTOR_NOTIBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+pub struct GCSpawnActorNotiBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GC_UPSERT_ACTOR_NOTIBuilder<'a, 'b, A> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCSpawnActorNotiBuilder<'a, 'b, A> {
   #[inline]
-  pub fn add_actors(&mut self, actors: flatbuffers::WIPOffset<flatbuffers::Vector<'b , WorldActorInfo>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GC_UPSERT_ACTOR_NOTI::VT_ACTORS, actors);
+  pub fn add_actor_idx(&mut self, actor_idx: u64) {
+    self.fbb_.push_slot::<u64>(GCSpawnActorNoti::VT_ACTOR_IDX, actor_idx, 0);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> GC_UPSERT_ACTOR_NOTIBuilder<'a, 'b, A> {
+  pub fn add_color(&mut self, color: &Color) {
+    self.fbb_.push_slot_always::<&Color>(GCSpawnActorNoti::VT_COLOR, color);
+  }
+  #[inline]
+  pub fn add_position(&mut self, position: &Vec2) {
+    self.fbb_.push_slot_always::<&Vec2>(GCSpawnActorNoti::VT_POSITION, position);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> GCSpawnActorNotiBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
-    GC_UPSERT_ACTOR_NOTIBuilder {
+    GCSpawnActorNotiBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<GC_UPSERT_ACTOR_NOTI<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<GCSpawnActorNoti<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
 }
 
-impl core::fmt::Debug for GC_UPSERT_ACTOR_NOTI<'_> {
+impl core::fmt::Debug for GCSpawnActorNoti<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    let mut ds = f.debug_struct("GC_UPSERT_ACTOR_NOTI");
-      ds.field("actors", &self.actors());
+    let mut ds = f.debug_struct("GCSpawnActorNoti");
+      ds.field("actor_idx", &self.actor_idx());
+      ds.field("color", &self.color());
+      ds.field("position", &self.position());
+      ds.finish()
+  }
+}
+pub enum CGChangeMoveDirectionReqOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct CGChangeMoveDirectionReq<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for CGChangeMoveDirectionReq<'a> {
+  type Inner = CGChangeMoveDirectionReq<'a>;
+  #[inline]
+  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    Self { _tab: flatbuffers::Table::new(buf, loc) }
+  }
+}
+
+impl<'a> CGChangeMoveDirectionReq<'a> {
+  pub const VT_DIRECTION: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+    CGChangeMoveDirectionReq { _tab: table }
+  }
+  #[allow(unused_mut)]
+  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+    _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+    args: &'args CGChangeMoveDirectionReqArgs<'args>
+  ) -> flatbuffers::WIPOffset<CGChangeMoveDirectionReq<'bldr>> {
+    let mut builder = CGChangeMoveDirectionReqBuilder::new(_fbb);
+    if let Some(x) = args.direction { builder.add_direction(x); }
+    builder.finish()
+  }
+
+
+  #[inline]
+  pub fn direction(&self) -> Option<&'a Vec2> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<Vec2>(CGChangeMoveDirectionReq::VT_DIRECTION, None)}
+  }
+}
+
+impl flatbuffers::Verifiable for CGChangeMoveDirectionReq<'_> {
+  #[inline]
+  fn run_verifier(
+    v: &mut flatbuffers::Verifier, pos: usize
+  ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+    use self::flatbuffers::Verifiable;
+    v.visit_table(pos)?
+     .visit_field::<Vec2>("direction", Self::VT_DIRECTION, false)?
+     .finish();
+    Ok(())
+  }
+}
+pub struct CGChangeMoveDirectionReqArgs<'a> {
+    pub direction: Option<&'a Vec2>,
+}
+impl<'a> Default for CGChangeMoveDirectionReqArgs<'a> {
+  #[inline]
+  fn default() -> Self {
+    CGChangeMoveDirectionReqArgs {
+      direction: None,
+    }
+  }
+}
+
+pub struct CGChangeMoveDirectionReqBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> CGChangeMoveDirectionReqBuilder<'a, 'b, A> {
+  #[inline]
+  pub fn add_direction(&mut self, direction: &Vec2) {
+    self.fbb_.push_slot_always::<&Vec2>(CGChangeMoveDirectionReq::VT_DIRECTION, direction);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> CGChangeMoveDirectionReqBuilder<'a, 'b, A> {
+    let start = _fbb.start_table();
+    CGChangeMoveDirectionReqBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<CGChangeMoveDirectionReq<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+impl core::fmt::Debug for CGChangeMoveDirectionReq<'_> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    let mut ds = f.debug_struct("CGChangeMoveDirectionReq");
+      ds.field("direction", &self.direction());
+      ds.finish()
+  }
+}
+pub enum GCChangeMoveDirectionResOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct GCChangeMoveDirectionRes<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for GCChangeMoveDirectionRes<'a> {
+  type Inner = GCChangeMoveDirectionRes<'a>;
+  #[inline]
+  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    Self { _tab: flatbuffers::Table::new(buf, loc) }
+  }
+}
+
+impl<'a> GCChangeMoveDirectionRes<'a> {
+  pub const VT_RESULT: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+    GCChangeMoveDirectionRes { _tab: table }
+  }
+  #[allow(unused_mut)]
+  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+    _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+    args: &'args GCChangeMoveDirectionResArgs
+  ) -> flatbuffers::WIPOffset<GCChangeMoveDirectionRes<'bldr>> {
+    let mut builder = GCChangeMoveDirectionResBuilder::new(_fbb);
+    builder.add_result(args.result);
+    builder.finish()
+  }
+
+
+  #[inline]
+  pub fn result(&self) -> ServerCode {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<ServerCode>(GCChangeMoveDirectionRes::VT_RESULT, Some(ServerCode::SUCCESS)).unwrap()}
+  }
+}
+
+impl flatbuffers::Verifiable for GCChangeMoveDirectionRes<'_> {
+  #[inline]
+  fn run_verifier(
+    v: &mut flatbuffers::Verifier, pos: usize
+  ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+    use self::flatbuffers::Verifiable;
+    v.visit_table(pos)?
+     .visit_field::<ServerCode>("result", Self::VT_RESULT, false)?
+     .finish();
+    Ok(())
+  }
+}
+pub struct GCChangeMoveDirectionResArgs {
+    pub result: ServerCode,
+}
+impl<'a> Default for GCChangeMoveDirectionResArgs {
+  #[inline]
+  fn default() -> Self {
+    GCChangeMoveDirectionResArgs {
+      result: ServerCode::SUCCESS,
+    }
+  }
+}
+
+pub struct GCChangeMoveDirectionResBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCChangeMoveDirectionResBuilder<'a, 'b, A> {
+  #[inline]
+  pub fn add_result(&mut self, result: ServerCode) {
+    self.fbb_.push_slot::<ServerCode>(GCChangeMoveDirectionRes::VT_RESULT, result, ServerCode::SUCCESS);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> GCChangeMoveDirectionResBuilder<'a, 'b, A> {
+    let start = _fbb.start_table();
+    GCChangeMoveDirectionResBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<GCChangeMoveDirectionRes<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+impl core::fmt::Debug for GCChangeMoveDirectionRes<'_> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    let mut ds = f.debug_struct("GCChangeMoveDirectionRes");
+      ds.field("result", &self.result());
+      ds.finish()
+  }
+}
+pub enum GCChangeActorDirectionNotiOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct GCChangeActorDirectionNoti<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for GCChangeActorDirectionNoti<'a> {
+  type Inner = GCChangeActorDirectionNoti<'a>;
+  #[inline]
+  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    Self { _tab: flatbuffers::Table::new(buf, loc) }
+  }
+}
+
+impl<'a> GCChangeActorDirectionNoti<'a> {
+  pub const VT_ACTOR_IDX: flatbuffers::VOffsetT = 4;
+  pub const VT_DIRECTION: flatbuffers::VOffsetT = 6;
+  pub const VT_POSITION: flatbuffers::VOffsetT = 8;
+
+  #[inline]
+  pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+    GCChangeActorDirectionNoti { _tab: table }
+  }
+  #[allow(unused_mut)]
+  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+    _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+    args: &'args GCChangeActorDirectionNotiArgs<'args>
+  ) -> flatbuffers::WIPOffset<GCChangeActorDirectionNoti<'bldr>> {
+    let mut builder = GCChangeActorDirectionNotiBuilder::new(_fbb);
+    builder.add_actor_idx(args.actor_idx);
+    if let Some(x) = args.position { builder.add_position(x); }
+    if let Some(x) = args.direction { builder.add_direction(x); }
+    builder.finish()
+  }
+
+
+  #[inline]
+  pub fn actor_idx(&self) -> u64 {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<u64>(GCChangeActorDirectionNoti::VT_ACTOR_IDX, Some(0)).unwrap()}
+  }
+  #[inline]
+  pub fn direction(&self) -> Option<&'a Vec2> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<Vec2>(GCChangeActorDirectionNoti::VT_DIRECTION, None)}
+  }
+  #[inline]
+  pub fn position(&self) -> Option<&'a Vec2> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<Vec2>(GCChangeActorDirectionNoti::VT_POSITION, None)}
+  }
+}
+
+impl flatbuffers::Verifiable for GCChangeActorDirectionNoti<'_> {
+  #[inline]
+  fn run_verifier(
+    v: &mut flatbuffers::Verifier, pos: usize
+  ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+    use self::flatbuffers::Verifiable;
+    v.visit_table(pos)?
+     .visit_field::<u64>("actor_idx", Self::VT_ACTOR_IDX, false)?
+     .visit_field::<Vec2>("direction", Self::VT_DIRECTION, false)?
+     .visit_field::<Vec2>("position", Self::VT_POSITION, false)?
+     .finish();
+    Ok(())
+  }
+}
+pub struct GCChangeActorDirectionNotiArgs<'a> {
+    pub actor_idx: u64,
+    pub direction: Option<&'a Vec2>,
+    pub position: Option<&'a Vec2>,
+}
+impl<'a> Default for GCChangeActorDirectionNotiArgs<'a> {
+  #[inline]
+  fn default() -> Self {
+    GCChangeActorDirectionNotiArgs {
+      actor_idx: 0,
+      direction: None,
+      position: None,
+    }
+  }
+}
+
+pub struct GCChangeActorDirectionNotiBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCChangeActorDirectionNotiBuilder<'a, 'b, A> {
+  #[inline]
+  pub fn add_actor_idx(&mut self, actor_idx: u64) {
+    self.fbb_.push_slot::<u64>(GCChangeActorDirectionNoti::VT_ACTOR_IDX, actor_idx, 0);
+  }
+  #[inline]
+  pub fn add_direction(&mut self, direction: &Vec2) {
+    self.fbb_.push_slot_always::<&Vec2>(GCChangeActorDirectionNoti::VT_DIRECTION, direction);
+  }
+  #[inline]
+  pub fn add_position(&mut self, position: &Vec2) {
+    self.fbb_.push_slot_always::<&Vec2>(GCChangeActorDirectionNoti::VT_POSITION, position);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> GCChangeActorDirectionNotiBuilder<'a, 'b, A> {
+    let start = _fbb.start_table();
+    GCChangeActorDirectionNotiBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<GCChangeActorDirectionNoti<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+impl core::fmt::Debug for GCChangeActorDirectionNoti<'_> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    let mut ds = f.debug_struct("GCChangeActorDirectionNoti");
+      ds.field("actor_idx", &self.actor_idx());
+      ds.field("direction", &self.direction());
+      ds.field("position", &self.position());
       ds.finish()
   }
 }

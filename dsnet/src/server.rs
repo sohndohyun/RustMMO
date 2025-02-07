@@ -12,29 +12,29 @@ use crate::packet_functions::*;
 
 enum NetEvent {
     Accept {
-        idx: u128,
+        idx: u64,
         to_send_tx: UnboundedSender<(u16, Vec<u8>)>,
     },
 
     Receive {
-        idx: u128,
+        idx: u64,
         packet_type: u16,
         message: Vec<u8>,
     },
 
     Disconnect {
-        idx: u128,
+        idx: u64,
     },
 }
 
 struct Session {
-    idx: u128,
+    idx: u64,
     pending_disconnect: bool,
     to_send_tx: UnboundedSender<(u16, Vec<u8>)>,
 }
 
 impl Session {
-    pub fn new(idx: u128, to_send_tx: UnboundedSender<(u16, Vec<u8>)>) -> Session {
+    pub fn new(idx: u64, to_send_tx: UnboundedSender<(u16, Vec<u8>)>) -> Session {
         Session {
             idx,
             pending_disconnect: false,
@@ -57,12 +57,12 @@ impl Session {
 }
 
 pub struct App {
-    sessions: HashMap<u128, Session>,
+    sessions: HashMap<u64, Session>,
 
     update_callback: Box<dyn FnMut(u32)>,
-    on_accept_callback: Box<dyn FnMut(u128)>,
-    on_receive_callback: Box<dyn FnMut(u128, u16, Vec<u8>)>,
-    on_disconnect_callback: Box<dyn FnMut(u128)>,
+    on_accept_callback: Box<dyn FnMut(u64)>,
+    on_receive_callback: Box<dyn FnMut(u64, u16, Vec<u8>)>,
+    on_disconnect_callback: Box<dyn FnMut(u64)>,
 }
 
 impl App {
@@ -88,7 +88,7 @@ impl App {
 
     pub fn send_message(
         &mut self,
-        idx: u128,
+        idx: u64,
         packet_type: u16,
         message: Vec<u8>,
     ) -> Result<(), Box<dyn std::error::Error>> {
@@ -99,7 +99,7 @@ impl App {
         }
     }
 
-    pub fn disconnect(&mut self, idx: u128) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn disconnect(&mut self, idx: u64) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(session) = self.sessions.get_mut(&idx) {
             if session.pending_disconnect == true {
                 return Ok(());
@@ -120,21 +120,21 @@ impl App {
 
     pub fn set_on_accept_callback<F>(&mut self, callback: F)
     where
-        F: FnMut(u128) + 'static,
+        F: FnMut(u64) + 'static,
     {
         self.on_accept_callback = Box::new(callback);
     }
 
     pub fn set_on_receive_callback<F>(&mut self, callback: F)
     where
-        F: FnMut(u128, u16, Vec<u8>) + 'static,
+        F: FnMut(u64, u16, Vec<u8>) + 'static,
     {
         self.on_receive_callback = Box::new(callback);
     }
 
     pub fn set_on_disconnect_callback<F>(&mut self, callback: F)
     where
-        F: FnMut(u128) + 'static,
+        F: FnMut(u64) + 'static,
     {
         self.on_disconnect_callback = Box::new(callback);
     }
@@ -142,7 +142,7 @@ impl App {
     async fn accept_process(str_addr: String, to_main_tx: UnboundedSender<NetEvent>) {
         let listener = TcpListener::bind(str_addr).await.unwrap();
 
-        let mut counter: u128 = 0;
+        let mut counter: u64 = 0;
 
         loop {
             match listener.accept().await {
@@ -175,7 +175,7 @@ impl App {
 
     async fn receive_process(
         mut rh: OwnedReadHalf,
-        idx: u128,
+        idx: u64,
         to_main_tx: UnboundedSender<NetEvent>,
     ) {
         let mut recv_buf = [0; 1024];
@@ -222,7 +222,7 @@ impl App {
 
     async fn send_process(
         mut wh: OwnedWriteHalf,
-        idx: u128,
+        idx: u64,
         mut to_send_rx: UnboundedReceiver<(u16, Vec<u8>)>,
     ) {
         let mut ring_buf = VecDeque::with_capacity(1024);

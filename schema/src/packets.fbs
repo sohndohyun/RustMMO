@@ -1,18 +1,34 @@
-include "result.fbs";
+include "server_code.fbs";
 include "structs.fbs";
 
 namespace Nexus;
 
-table CG_LOGIN_REQ {
+table CGLoginReq {
     name:string;
     color:Color;
 }
 
-table GC_LOGIN_RES {
-    actorIdx:ulong;
-    result:Result;
+table GCLoginRes {
+    actor_idx:ulong;
+    result:ServerCode;
 }
 
-table GC_UPSERT_ACTOR_NOTI {
-    actors: [WorldActorInfo];
+table GCSpawnActorNoti {
+    actor_idx:ulong;
+    color:Color;
+    position:Vec2;
+}
+
+table CGChangeMoveDirectionReq {
+    direction:Vec2;
+}
+
+table GCChangeMoveDirectionRes {
+    result:ServerCode;
+}
+
+table GCChangeActorDirectionNoti {
+    actor_idx:ulong;
+    direction:Vec2;
+    position:Vec2;
 }

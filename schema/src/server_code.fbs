@@ -1,6 +1,6 @@
 namespace Nexus;
 
-enum Result: ulong{
+enum ServerCode: ulong{
     SUCCESS = 0,
     FAILED = 1,
 }

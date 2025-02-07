@@ -9,7 +9,7 @@ using global::System;
 using global::System.Collections.Generic;
 using global::Google.FlatBuffers;
 
-public enum Result : ulong
+public enum ServerCode : ulong
 {
   SUCCESS = 0,
   FAILED = 1,
@@ -60,47 +60,15 @@ public struct Vec2 : IFlatbufferObject
   }
 }
 
-public struct WorldActorInfo : IFlatbufferObject
-{
-  private Struct __p;
-  public ByteBuffer ByteBuffer { get { return __p.bb; } }
-  public void __init(int _i, ByteBuffer _bb) { __p = new Struct(_i, _bb); }
-  public WorldActorInfo __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
-
-  public ulong ActorIdx { get { return __p.bb.GetUlong(__p.bb_pos + 0); } }
-  public Nexus.Vec2 Position { get { return (new Nexus.Vec2()).__assign(__p.bb_pos + 8, __p.bb); } }
-  public float MoveSpeed { get { return __p.bb.GetFloat(__p.bb_pos + 16); } }
-  public Nexus.Vec2 Direction { get { return (new Nexus.Vec2()).__assign(__p.bb_pos + 20, __p.bb); } }
-  public Nexus.Color Color { get { return (new Nexus.Color()).__assign(__p.bb_pos + 28, __p.bb); } }
-
-  public static Offset<Nexus.WorldActorInfo> CreateWorldActorInfo(FlatBufferBuilder builder, ulong ActorIdx, float position_X, float position_Y, float MoveSpeed, float direction_X, float direction_Y, sbyte color_R, sbyte color_G, sbyte color_B) {
-    builder.Prep(8, 32);
-    builder.Pad(1);
-    builder.Prep(1, 3);
-    builder.PutSbyte(color_B);
-    builder.PutSbyte(color_G);
-    builder.PutSbyte(color_R);
-    builder.Prep(4, 8);
-    builder.PutFloat(direction_Y);
-    builder.PutFloat(direction_X);
-    builder.PutFloat(MoveSpeed);
-    builder.Prep(4, 8);
-    builder.PutFloat(position_Y);
-    builder.PutFloat(position_X);
-    builder.PutUlong(ActorIdx);
-    return new Offset<Nexus.WorldActorInfo>(builder.Offset);
-  }
-}
-
-public struct CG_LOGIN_REQ : IFlatbufferObject
+public struct CGLoginReq : IFlatbufferObject
 {
   private Table __p;
   public ByteBuffer ByteBuffer { get { return __p.bb; } }
   public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_1_24(); }
-  public static CG_LOGIN_REQ GetRootAsCG_LOGIN_REQ(ByteBuffer _bb) { return GetRootAsCG_LOGIN_REQ(_bb, new CG_LOGIN_REQ()); }
-  public static CG_LOGIN_REQ GetRootAsCG_LOGIN_REQ(ByteBuffer _bb, CG_LOGIN_REQ obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public static CGLoginReq GetRootAsCGLoginReq(ByteBuffer _bb) { return GetRootAsCGLoginReq(_bb, new CGLoginReq()); }
+  public static CGLoginReq GetRootAsCGLoginReq(ByteBuffer _bb, CGLoginReq obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
-  public CG_LOGIN_REQ __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+  public CGLoginReq __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public string Name { get { int o = __p.__offset(4); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
 #if ENABLE_SPAN_T
@@ -111,17 +79,17 @@ public struct CG_LOGIN_REQ : IFlatbufferObject
   public byte[] GetNameArray() { return __p.__vector_as_array<byte>(4); }
   public Nexus.Color? Color { get { int o = __p.__offset(6); return o != 0 ? (Nexus.Color?)(new Nexus.Color()).__assign(o + __p.bb_pos, __p.bb) : null; } }
 
-  public static void StartCG_LOGIN_REQ(FlatBufferBuilder builder) { builder.StartTable(2); }
+  public static void StartCGLoginReq(FlatBufferBuilder builder) { builder.StartTable(2); }
   public static void AddName(FlatBufferBuilder builder, StringOffset nameOffset) { builder.AddOffset(0, nameOffset.Value, 0); }
   public static void AddColor(FlatBufferBuilder builder, Offset<Nexus.Color> colorOffset) { builder.AddStruct(1, colorOffset.Value, 0); }
-  public static Offset<Nexus.CG_LOGIN_REQ> EndCG_LOGIN_REQ(FlatBufferBuilder builder) {
+  public static Offset<Nexus.CGLoginReq> EndCGLoginReq(FlatBufferBuilder builder) {
     int o = builder.EndTable();
-    return new Offset<Nexus.CG_LOGIN_REQ>(o);
+    return new Offset<Nexus.CGLoginReq>(o);
   }
 }
 
 
-static public class CG_LOGIN_REQVerify
+static public class CGLoginReqVerify
 {
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
@@ -131,84 +99,184 @@ static public class CG_LOGIN_REQVerify
       && verifier.VerifyTableEnd(tablePos);
   }
 }
-public struct GC_LOGIN_RES : IFlatbufferObject
+public struct GCLoginRes : IFlatbufferObject
 {
   private Table __p;
   public ByteBuffer ByteBuffer { get { return __p.bb; } }
   public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_1_24(); }
-  public static GC_LOGIN_RES GetRootAsGC_LOGIN_RES(ByteBuffer _bb) { return GetRootAsGC_LOGIN_RES(_bb, new GC_LOGIN_RES()); }
-  public static GC_LOGIN_RES GetRootAsGC_LOGIN_RES(ByteBuffer _bb, GC_LOGIN_RES obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public static GCLoginRes GetRootAsGCLoginRes(ByteBuffer _bb) { return GetRootAsGCLoginRes(_bb, new GCLoginRes()); }
+  public static GCLoginRes GetRootAsGCLoginRes(ByteBuffer _bb, GCLoginRes obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
-  public GC_LOGIN_RES __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+  public GCLoginRes __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public ulong ActorIdx { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUlong(o + __p.bb_pos) : (ulong)0; } }
-  public Nexus.Result Result { get { int o = __p.__offset(6); return o != 0 ? (Nexus.Result)__p.bb.GetUlong(o + __p.bb_pos) : Nexus.Result.SUCCESS; } }
+  public Nexus.ServerCode Result { get { int o = __p.__offset(6); return o != 0 ? (Nexus.ServerCode)__p.bb.GetUlong(o + __p.bb_pos) : Nexus.ServerCode.SUCCESS; } }
 
-  public static Offset<Nexus.GC_LOGIN_RES> CreateGC_LOGIN_RES(FlatBufferBuilder builder,
-      ulong actorIdx = 0,
-      Nexus.Result result = Nexus.Result.SUCCESS) {
+  public static Offset<Nexus.GCLoginRes> CreateGCLoginRes(FlatBufferBuilder builder,
+      ulong actor_idx = 0,
+      Nexus.ServerCode result = Nexus.ServerCode.SUCCESS) {
     builder.StartTable(2);
-    GC_LOGIN_RES.AddResult(builder, result);
-    GC_LOGIN_RES.AddActorIdx(builder, actorIdx);
-    return GC_LOGIN_RES.EndGC_LOGIN_RES(builder);
+    GCLoginRes.AddResult(builder, result);
+    GCLoginRes.AddActorIdx(builder, actor_idx);
+    return GCLoginRes.EndGCLoginRes(builder);
   }
 
-  public static void StartGC_LOGIN_RES(FlatBufferBuilder builder) { builder.StartTable(2); }
+  public static void StartGCLoginRes(FlatBufferBuilder builder) { builder.StartTable(2); }
   public static void AddActorIdx(FlatBufferBuilder builder, ulong actorIdx) { builder.AddUlong(0, actorIdx, 0); }
-  public static void AddResult(FlatBufferBuilder builder, Nexus.Result result) { builder.AddUlong(1, (ulong)result, 0); }
-  public static Offset<Nexus.GC_LOGIN_RES> EndGC_LOGIN_RES(FlatBufferBuilder builder) {
+  public static void AddResult(FlatBufferBuilder builder, Nexus.ServerCode result) { builder.AddUlong(1, (ulong)result, 0); }
+  public static Offset<Nexus.GCLoginRes> EndGCLoginRes(FlatBufferBuilder builder) {
     int o = builder.EndTable();
-    return new Offset<Nexus.GC_LOGIN_RES>(o);
+    return new Offset<Nexus.GCLoginRes>(o);
   }
 }
 
 
-static public class GC_LOGIN_RESVerify
+static public class GCLoginResVerify
 {
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
     return verifier.VerifyTableStart(tablePos)
       && verifier.VerifyField(tablePos, 4 /*ActorIdx*/, 8 /*ulong*/, 8, false)
-      && verifier.VerifyField(tablePos, 6 /*Result*/, 8 /*Nexus.Result*/, 8, false)
+      && verifier.VerifyField(tablePos, 6 /*Result*/, 8 /*Nexus.ServerCode*/, 8, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }
-public struct GC_UPSERT_ACTOR_NOTI : IFlatbufferObject
+public struct GCSpawnActorNoti : IFlatbufferObject
 {
   private Table __p;
   public ByteBuffer ByteBuffer { get { return __p.bb; } }
   public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_1_24(); }
-  public static GC_UPSERT_ACTOR_NOTI GetRootAsGC_UPSERT_ACTOR_NOTI(ByteBuffer _bb) { return GetRootAsGC_UPSERT_ACTOR_NOTI(_bb, new GC_UPSERT_ACTOR_NOTI()); }
-  public static GC_UPSERT_ACTOR_NOTI GetRootAsGC_UPSERT_ACTOR_NOTI(ByteBuffer _bb, GC_UPSERT_ACTOR_NOTI obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public static GCSpawnActorNoti GetRootAsGCSpawnActorNoti(ByteBuffer _bb) { return GetRootAsGCSpawnActorNoti(_bb, new GCSpawnActorNoti()); }
+  public static GCSpawnActorNoti GetRootAsGCSpawnActorNoti(ByteBuffer _bb, GCSpawnActorNoti obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
-  public GC_UPSERT_ACTOR_NOTI __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+  public GCSpawnActorNoti __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public Nexus.WorldActorInfo? Actors(int j) { int o = __p.__offset(4); return o != 0 ? (Nexus.WorldActorInfo?)(new Nexus.WorldActorInfo()).__assign(__p.__vector(o) + j * 32, __p.bb) : null; }
-  public int ActorsLength { get { int o = __p.__offset(4); return o != 0 ? __p.__vector_len(o) : 0; } }
+  public ulong ActorIdx { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUlong(o + __p.bb_pos) : (ulong)0; } }
+  public Nexus.Color? Color { get { int o = __p.__offset(6); return o != 0 ? (Nexus.Color?)(new Nexus.Color()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+  public Nexus.Vec2? Position { get { int o = __p.__offset(8); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
 
-  public static Offset<Nexus.GC_UPSERT_ACTOR_NOTI> CreateGC_UPSERT_ACTOR_NOTI(FlatBufferBuilder builder,
-      VectorOffset actorsOffset = default(VectorOffset)) {
-    builder.StartTable(1);
-    GC_UPSERT_ACTOR_NOTI.AddActors(builder, actorsOffset);
-    return GC_UPSERT_ACTOR_NOTI.EndGC_UPSERT_ACTOR_NOTI(builder);
-  }
-
-  public static void StartGC_UPSERT_ACTOR_NOTI(FlatBufferBuilder builder) { builder.StartTable(1); }
-  public static void AddActors(FlatBufferBuilder builder, VectorOffset actorsOffset) { builder.AddOffset(0, actorsOffset.Value, 0); }
-  public static void StartActorsVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(32, numElems, 8); }
-  public static Offset<Nexus.GC_UPSERT_ACTOR_NOTI> EndGC_UPSERT_ACTOR_NOTI(FlatBufferBuilder builder) {
+  public static void StartGCSpawnActorNoti(FlatBufferBuilder builder) { builder.StartTable(3); }
+  public static void AddActorIdx(FlatBufferBuilder builder, ulong actorIdx) { builder.AddUlong(0, actorIdx, 0); }
+  public static void AddColor(FlatBufferBuilder builder, Offset<Nexus.Color> colorOffset) { builder.AddStruct(1, colorOffset.Value, 0); }
+  public static void AddPosition(FlatBufferBuilder builder, Offset<Nexus.Vec2> positionOffset) { builder.AddStruct(2, positionOffset.Value, 0); }
+  public static Offset<Nexus.GCSpawnActorNoti> EndGCSpawnActorNoti(FlatBufferBuilder builder) {
     int o = builder.EndTable();
-    return new Offset<Nexus.GC_UPSERT_ACTOR_NOTI>(o);
+    return new Offset<Nexus.GCSpawnActorNoti>(o);
   }
 }
 
 
-static public class GC_UPSERT_ACTOR_NOTIVerify
+static public class GCSpawnActorNotiVerify
 {
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
     return verifier.VerifyTableStart(tablePos)
-      && verifier.VerifyVectorOfData(tablePos, 4 /*Actors*/, 32 /*Nexus.WorldActorInfo*/, false)
+      && verifier.VerifyField(tablePos, 4 /*ActorIdx*/, 8 /*ulong*/, 8, false)
+      && verifier.VerifyField(tablePos, 6 /*Color*/, 3 /*Nexus.Color*/, 1, false)
+      && verifier.VerifyField(tablePos, 8 /*Position*/, 8 /*Nexus.Vec2*/, 4, false)
+      && verifier.VerifyTableEnd(tablePos);
+  }
+}
+public struct CGChangeMoveDirectionReq : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_1_24(); }
+  public static CGChangeMoveDirectionReq GetRootAsCGChangeMoveDirectionReq(ByteBuffer _bb) { return GetRootAsCGChangeMoveDirectionReq(_bb, new CGChangeMoveDirectionReq()); }
+  public static CGChangeMoveDirectionReq GetRootAsCGChangeMoveDirectionReq(ByteBuffer _bb, CGChangeMoveDirectionReq obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
+  public CGChangeMoveDirectionReq __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+  public Nexus.Vec2? Direction { get { int o = __p.__offset(4); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+
+  public static void StartCGChangeMoveDirectionReq(FlatBufferBuilder builder) { builder.StartTable(1); }
+  public static void AddDirection(FlatBufferBuilder builder, Offset<Nexus.Vec2> directionOffset) { builder.AddStruct(0, directionOffset.Value, 0); }
+  public static Offset<Nexus.CGChangeMoveDirectionReq> EndCGChangeMoveDirectionReq(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<Nexus.CGChangeMoveDirectionReq>(o);
+  }
+}
+
+
+static public class CGChangeMoveDirectionReqVerify
+{
+  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
+  {
+    return verifier.VerifyTableStart(tablePos)
+      && verifier.VerifyField(tablePos, 4 /*Direction*/, 8 /*Nexus.Vec2*/, 4, false)
+      && verifier.VerifyTableEnd(tablePos);
+  }
+}
+public struct GCChangeMoveDirectionRes : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_1_24(); }
+  public static GCChangeMoveDirectionRes GetRootAsGCChangeMoveDirectionRes(ByteBuffer _bb) { return GetRootAsGCChangeMoveDirectionRes(_bb, new GCChangeMoveDirectionRes()); }
+  public static GCChangeMoveDirectionRes GetRootAsGCChangeMoveDirectionRes(ByteBuffer _bb, GCChangeMoveDirectionRes obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
+  public GCChangeMoveDirectionRes __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+  public Nexus.ServerCode Result { get { int o = __p.__offset(4); return o != 0 ? (Nexus.ServerCode)__p.bb.GetUlong(o + __p.bb_pos) : Nexus.ServerCode.SUCCESS; } }
+
+  public static Offset<Nexus.GCChangeMoveDirectionRes> CreateGCChangeMoveDirectionRes(FlatBufferBuilder builder,
+      Nexus.ServerCode result = Nexus.ServerCode.SUCCESS) {
+    builder.StartTable(1);
+    GCChangeMoveDirectionRes.AddResult(builder, result);
+    return GCChangeMoveDirectionRes.EndGCChangeMoveDirectionRes(builder);
+  }
+
+  public static void StartGCChangeMoveDirectionRes(FlatBufferBuilder builder) { builder.StartTable(1); }
+  public static void AddResult(FlatBufferBuilder builder, Nexus.ServerCode result) { builder.AddUlong(0, (ulong)result, 0); }
+  public static Offset<Nexus.GCChangeMoveDirectionRes> EndGCChangeMoveDirectionRes(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<Nexus.GCChangeMoveDirectionRes>(o);
+  }
+}
+
+
+static public class GCChangeMoveDirectionResVerify
+{
+  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
+  {
+    return verifier.VerifyTableStart(tablePos)
+      && verifier.VerifyField(tablePos, 4 /*Result*/, 8 /*Nexus.ServerCode*/, 8, false)
+      && verifier.VerifyTableEnd(tablePos);
+  }
+}
+public struct GCChangeActorDirectionNoti : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_1_24(); }
+  public static GCChangeActorDirectionNoti GetRootAsGCChangeActorDirectionNoti(ByteBuffer _bb) { return GetRootAsGCChangeActorDirectionNoti(_bb, new GCChangeActorDirectionNoti()); }
+  public static GCChangeActorDirectionNoti GetRootAsGCChangeActorDirectionNoti(ByteBuffer _bb, GCChangeActorDirectionNoti obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
+  public GCChangeActorDirectionNoti __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+  public ulong ActorIdx { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUlong(o + __p.bb_pos) : (ulong)0; } }
+  public Nexus.Vec2? Direction { get { int o = __p.__offset(6); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+  public Nexus.Vec2? Position { get { int o = __p.__offset(8); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+
+  public static void StartGCChangeActorDirectionNoti(FlatBufferBuilder builder) { builder.StartTable(3); }
+  public static void AddActorIdx(FlatBufferBuilder builder, ulong actorIdx) { builder.AddUlong(0, actorIdx, 0); }
+  public static void AddDirection(FlatBufferBuilder builder, Offset<Nexus.Vec2> directionOffset) { builder.AddStruct(1, directionOffset.Value, 0); }
+  public static void AddPosition(FlatBufferBuilder builder, Offset<Nexus.Vec2> positionOffset) { builder.AddStruct(2, positionOffset.Value, 0); }
+  public static Offset<Nexus.GCChangeActorDirectionNoti> EndGCChangeActorDirectionNoti(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<Nexus.GCChangeActorDirectionNoti>(o);
+  }
+}
+
+
+static public class GCChangeActorDirectionNotiVerify
+{
+  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
+  {
+    return verifier.VerifyTableStart(tablePos)
+      && verifier.VerifyField(tablePos, 4 /*ActorIdx*/, 8 /*ulong*/, 8, false)
+      && verifier.VerifyField(tablePos, 6 /*Direction*/, 8 /*Nexus.Vec2*/, 4, false)
+      && verifier.VerifyField(tablePos, 8 /*Position*/, 8 /*Nexus.Vec2*/, 4, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }

@@ -8,7 +8,7 @@ pub use protocol_generated::nexus;
 
 struct ChatServer {
     app: server::App,
-    indexs: Vec<u128>,
+    indexs: Vec<u64>,
 }
 
 impl ChatServer {
@@ -53,19 +53,19 @@ impl ChatServer {
         
     }
 
-    fn on_accept(&mut self, idx: u128) {
+    fn on_accept(&mut self, idx: u64) {
         println!("on_accept callback triggered. (idx: {})", idx);
         self.indexs.push(idx);
     }
 
-    fn on_receive(&mut self, idx: u128, packet_type: u16, payload: Vec<u8>) {
+    fn on_receive(&mut self, idx: u64, packet_type: u16, payload: Vec<u8>) {
         println!("on_receive callback triggered. (idx: {})", idx);
         for value in &self.indexs {
             _ = self.app.send_message(*value, packet_type, payload.clone());
         }
     }
 
-    fn on_disconnect(&mut self, idx: u128) {
+    fn on_disconnect(&mut self, idx: u64) {
         println!("on_disconnect callback triggered. (idx: {})", idx);
         if let Some(pos) = self.indexs.iter().position(|&x| x == idx) {
             self.indexs.swap_remove(pos); 
