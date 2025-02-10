@@ -1,67 +1,58 @@
 use crate::protocol_generated::nexus::*;
 use flatbuffers::FlatBufferBuilder;
 
-pub fn build_gc_login_res<'a>(
-    builder: &'a mut FlatBufferBuilder,
-    actor_idx: u64,
-    result: ServerCode,
-) -> &'a [u8] {
-    builder.reset();
-    let root = GCLoginRes::create(builder, &GCLoginResArgs { actor_idx, result });
+pub fn build_gc_login_res(actor_idx: u64, result: ServerCode) -> Vec<u8> {
+    let mut builder = FlatBufferBuilder::with_capacity(64);
+    
+    let root = GCLoginRes::create(&mut builder, &GCLoginResArgs { actor_idx, result });
 
     builder.finish(root, None);
-    builder.finished_data()
+    builder.collapse().0 // offset 불필요, 무시 가능
 }
 
-pub fn build_gc_spawn_actor_noti<'a>(
-    builder: &'a mut FlatBufferBuilder,
-    actor_idx: u64,
-    color: Color,
-    position: Vec2,
-) -> &'a [u8] {
-    builder.reset();
+pub fn build_gc_spawn_actor_noti(actor_idx: u64, color: &Color, speed: f32, position: &Vec2, direction: &Vec2) -> Vec<u8> {
+    let mut builder = FlatBufferBuilder::with_capacity(128);
 
     let root = GCSpawnActorNoti::create(
-        builder,
+        &mut builder,
         &GCSpawnActorNotiArgs {
             actor_idx,
-            color: Some(&color),
-            position: Some(&position),
+            color: Some(color),
+            speed,
+            position: Some(position),
+            direction: Some(direction),
         },
     );
 
     builder.finish(root, None);
-    builder.finished_data()
+    builder.collapse().0
 }
 
-pub fn build_gc_change_move_direction_res<'a>(
-    builder: &'a mut FlatBufferBuilder,
-    result: ServerCode,
-) -> &'a [u8] {
-    builder.reset();
-    let root = GCChangeMoveDirectionRes::create(builder, &GCChangeMoveDirectionResArgs { result });
+pub fn build_gc_change_move_direction_res(result: ServerCode) -> Vec<u8> {
+    let mut builder = FlatBufferBuilder::with_capacity(32);
+
+    let root = GCChangeMoveDirectionRes::create(&mut builder, &GCChangeMoveDirectionResArgs { result });
 
     builder.finish(root, None);
-    builder.finished_data()
+    builder.collapse().0
 }
 
-pub fn build_gc_change_actor_direction_noti<'a>(
-    builder: &'a mut FlatBufferBuilder,
-    actor_idx:u64,
-    direction:Vec2,
-    position:Vec2,
-) -> &'a [u8] {
-    builder.reset();
+pub fn build_gc_change_actor_direction_noti(
+    actor_idx: u64,
+    direction: &Vec2,
+    position: &Vec2,
+) -> Vec<u8> {
+    let mut builder = FlatBufferBuilder::with_capacity(128);
 
     let root = GCChangeActorDirectionNoti::create(
-        builder,
+        &mut builder,
         &GCChangeActorDirectionNotiArgs {
             actor_idx,
-            direction: Some(&direction),
-            position: Some(&position),
+            direction: Some(direction),
+            position: Some(position),
         },
     );
 
     builder.finish(root, None);
-    builder.finished_data()
+    builder.collapse().0
 }

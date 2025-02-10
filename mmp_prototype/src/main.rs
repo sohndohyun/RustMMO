@@ -2,6 +2,7 @@ mod game_server;
 mod protocol_generated;
 mod game_user;
 mod build_packet;
+mod world;
 
 #[tokio::main]
 async fn main() {

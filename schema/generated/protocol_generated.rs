@@ -106,13 +106,16 @@ impl flatbuffers::SimpleToVerifyInSlice for ServerCode {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_PACKET_TYPE: u16 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_PACKET_TYPE: u16 = 2;
+pub const ENUM_MAX_PACKET_TYPE: u16 = 5;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_PACKET_TYPE: [PacketType; 3] = [
+pub const ENUM_VALUES_PACKET_TYPE: [PacketType; 6] = [
   PacketType::CG_LOGIN_REQ,
   PacketType::GC_LOGIN_RES,
-  PacketType::GC_UPSERT_ACTOR_NOTI,
+  PacketType::GC_SPAWN_ACTOR_NOTI,
+  PacketType::CG_CHANGE_MOVE_DIRECTION_REQ,
+  PacketType::GC_CHANGE_MOVE_DIRECTION_RES,
+  PacketType::GC_CHANGE_ACTOR_DIRECTION_NOTI,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -122,21 +125,30 @@ pub struct PacketType(pub u16);
 impl PacketType {
   pub const CG_LOGIN_REQ: Self = Self(0);
   pub const GC_LOGIN_RES: Self = Self(1);
-  pub const GC_UPSERT_ACTOR_NOTI: Self = Self(2);
+  pub const GC_SPAWN_ACTOR_NOTI: Self = Self(2);
+  pub const CG_CHANGE_MOVE_DIRECTION_REQ: Self = Self(3);
+  pub const GC_CHANGE_MOVE_DIRECTION_RES: Self = Self(4);
+  pub const GC_CHANGE_ACTOR_DIRECTION_NOTI: Self = Self(5);
 
   pub const ENUM_MIN: u16 = 0;
-  pub const ENUM_MAX: u16 = 2;
+  pub const ENUM_MAX: u16 = 5;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::CG_LOGIN_REQ,
     Self::GC_LOGIN_RES,
-    Self::GC_UPSERT_ACTOR_NOTI,
+    Self::GC_SPAWN_ACTOR_NOTI,
+    Self::CG_CHANGE_MOVE_DIRECTION_REQ,
+    Self::GC_CHANGE_MOVE_DIRECTION_RES,
+    Self::GC_CHANGE_ACTOR_DIRECTION_NOTI,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
     match self {
       Self::CG_LOGIN_REQ => Some("CG_LOGIN_REQ"),
       Self::GC_LOGIN_RES => Some("GC_LOGIN_RES"),
-      Self::GC_UPSERT_ACTOR_NOTI => Some("GC_UPSERT_ACTOR_NOTI"),
+      Self::GC_SPAWN_ACTOR_NOTI => Some("GC_SPAWN_ACTOR_NOTI"),
+      Self::CG_CHANGE_MOVE_DIRECTION_REQ => Some("CG_CHANGE_MOVE_DIRECTION_REQ"),
+      Self::GC_CHANGE_MOVE_DIRECTION_RES => Some("GC_CHANGE_MOVE_DIRECTION_RES"),
+      Self::GC_CHANGE_ACTOR_DIRECTION_NOTI => Some("GC_CHANGE_ACTOR_DIRECTION_NOTI"),
       _ => None,
     }
   }
@@ -195,10 +207,10 @@ impl flatbuffers::SimpleToVerifyInSlice for PacketType {}
 // struct Color, aligned to 1
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq)]
-pub struct Color(pub [u8; 3]);
+pub struct Color(pub [u8; 4]);
 impl Default for Color { 
   fn default() -> Self { 
-    Self([0; 3])
+    Self([0; 4])
   }
 }
 impl core::fmt::Debug for Color {
@@ -207,6 +219,7 @@ impl core::fmt::Debug for Color {
       .field("r", &self.r())
       .field("g", &self.g())
       .field("b", &self.b())
+      .field("a", &self.a())
       .finish()
   }
 }
@@ -255,11 +268,13 @@ impl<'a> Color {
     r: i8,
     g: i8,
     b: i8,
+    a: i8,
   ) -> Self {
-    let mut s = Self([0; 3]);
+    let mut s = Self([0; 4]);
     s.set_r(r);
     s.set_g(g);
     s.set_b(b);
+    s.set_a(a);
     s
   }
 
@@ -345,6 +360,35 @@ impl<'a> Color {
       core::ptr::copy_nonoverlapping(
         &x_le as *const _ as *const u8,
         self.0[2..].as_mut_ptr(),
+        core::mem::size_of::<<i8 as EndianScalar>::Scalar>(),
+      );
+    }
+  }
+
+  pub fn a(&self) -> i8 {
+    let mut mem = core::mem::MaybeUninit::<<i8 as EndianScalar>::Scalar>::uninit();
+    // Safety:
+    // Created from a valid Table for this object
+    // Which contains a valid value in this slot
+    EndianScalar::from_little_endian(unsafe {
+      core::ptr::copy_nonoverlapping(
+        self.0[3..].as_ptr(),
+        mem.as_mut_ptr() as *mut u8,
+        core::mem::size_of::<<i8 as EndianScalar>::Scalar>(),
+      );
+      mem.assume_init()
+    })
+  }
+
+  pub fn set_a(&mut self, x: i8) {
+    let x_le = x.to_little_endian();
+    // Safety:
+    // Created from a valid Table for this object
+    // Which contains a valid value in this slot
+    unsafe {
+      core::ptr::copy_nonoverlapping(
+        &x_le as *const _ as *const u8,
+        self.0[3..].as_mut_ptr(),
         core::mem::size_of::<<i8 as EndianScalar>::Scalar>(),
       );
     }
@@ -726,7 +770,9 @@ impl<'a> flatbuffers::Follow<'a> for GCSpawnActorNoti<'a> {
 impl<'a> GCSpawnActorNoti<'a> {
   pub const VT_ACTOR_IDX: flatbuffers::VOffsetT = 4;
   pub const VT_COLOR: flatbuffers::VOffsetT = 6;
-  pub const VT_POSITION: flatbuffers::VOffsetT = 8;
+  pub const VT_SPEED: flatbuffers::VOffsetT = 8;
+  pub const VT_POSITION: flatbuffers::VOffsetT = 10;
+  pub const VT_DIRECTION: flatbuffers::VOffsetT = 12;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -739,7 +785,9 @@ impl<'a> GCSpawnActorNoti<'a> {
   ) -> flatbuffers::WIPOffset<GCSpawnActorNoti<'bldr>> {
     let mut builder = GCSpawnActorNotiBuilder::new(_fbb);
     builder.add_actor_idx(args.actor_idx);
+    if let Some(x) = args.direction { builder.add_direction(x); }
     if let Some(x) = args.position { builder.add_position(x); }
+    builder.add_speed(args.speed);
     if let Some(x) = args.color { builder.add_color(x); }
     builder.finish()
   }
@@ -760,11 +808,25 @@ impl<'a> GCSpawnActorNoti<'a> {
     unsafe { self._tab.get::<Color>(GCSpawnActorNoti::VT_COLOR, None)}
   }
   #[inline]
+  pub fn speed(&self) -> f32 {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<f32>(GCSpawnActorNoti::VT_SPEED, Some(0.0)).unwrap()}
+  }
+  #[inline]
   pub fn position(&self) -> Option<&'a Vec2> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<Vec2>(GCSpawnActorNoti::VT_POSITION, None)}
+  }
+  #[inline]
+  pub fn direction(&self) -> Option<&'a Vec2> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<Vec2>(GCSpawnActorNoti::VT_DIRECTION, None)}
   }
 }
 
@@ -777,7 +839,9 @@ impl flatbuffers::Verifiable for GCSpawnActorNoti<'_> {
     v.visit_table(pos)?
      .visit_field::<u64>("actor_idx", Self::VT_ACTOR_IDX, false)?
      .visit_field::<Color>("color", Self::VT_COLOR, false)?
+     .visit_field::<f32>("speed", Self::VT_SPEED, false)?
      .visit_field::<Vec2>("position", Self::VT_POSITION, false)?
+     .visit_field::<Vec2>("direction", Self::VT_DIRECTION, false)?
      .finish();
     Ok(())
   }
@@ -785,7 +849,9 @@ impl flatbuffers::Verifiable for GCSpawnActorNoti<'_> {
 pub struct GCSpawnActorNotiArgs<'a> {
     pub actor_idx: u64,
     pub color: Option<&'a Color>,
+    pub speed: f32,
     pub position: Option<&'a Vec2>,
+    pub direction: Option<&'a Vec2>,
 }
 impl<'a> Default for GCSpawnActorNotiArgs<'a> {
   #[inline]
@@ -793,7 +859,9 @@ impl<'a> Default for GCSpawnActorNotiArgs<'a> {
     GCSpawnActorNotiArgs {
       actor_idx: 0,
       color: None,
+      speed: 0.0,
       position: None,
+      direction: None,
     }
   }
 }
@@ -812,8 +880,16 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCSpawnActorNotiBuilder<'a, 'b,
     self.fbb_.push_slot_always::<&Color>(GCSpawnActorNoti::VT_COLOR, color);
   }
   #[inline]
+  pub fn add_speed(&mut self, speed: f32) {
+    self.fbb_.push_slot::<f32>(GCSpawnActorNoti::VT_SPEED, speed, 0.0);
+  }
+  #[inline]
   pub fn add_position(&mut self, position: &Vec2) {
     self.fbb_.push_slot_always::<&Vec2>(GCSpawnActorNoti::VT_POSITION, position);
+  }
+  #[inline]
+  pub fn add_direction(&mut self, direction: &Vec2) {
+    self.fbb_.push_slot_always::<&Vec2>(GCSpawnActorNoti::VT_DIRECTION, direction);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> GCSpawnActorNotiBuilder<'a, 'b, A> {
@@ -835,7 +911,9 @@ impl core::fmt::Debug for GCSpawnActorNoti<'_> {
     let mut ds = f.debug_struct("GCSpawnActorNoti");
       ds.field("actor_idx", &self.actor_idx());
       ds.field("color", &self.color());
+      ds.field("speed", &self.speed());
       ds.field("position", &self.position());
+      ds.field("direction", &self.direction());
       ds.finish()
   }
 }

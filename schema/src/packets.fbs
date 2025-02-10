@@ -16,7 +16,9 @@ table GCLoginRes {
 table GCSpawnActorNoti {
     actor_idx:ulong;
     color:Color;
+    speed:float;
     position:Vec2;
+    direction:Vec2;
 }
 
 table CGChangeMoveDirectionReq {

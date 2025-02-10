@@ -4,6 +4,7 @@ struct Color {
     r: byte;
     g: byte;
     b: byte;
+    a: byte;
 }
 
 struct Vec2 {
