@@ -769,10 +769,11 @@ impl<'a> flatbuffers::Follow<'a> for GCSpawnActorNoti<'a> {
 
 impl<'a> GCSpawnActorNoti<'a> {
   pub const VT_ACTOR_IDX: flatbuffers::VOffsetT = 4;
-  pub const VT_COLOR: flatbuffers::VOffsetT = 6;
-  pub const VT_SPEED: flatbuffers::VOffsetT = 8;
-  pub const VT_POSITION: flatbuffers::VOffsetT = 10;
-  pub const VT_DIRECTION: flatbuffers::VOffsetT = 12;
+  pub const VT_NAME: flatbuffers::VOffsetT = 6;
+  pub const VT_COLOR: flatbuffers::VOffsetT = 8;
+  pub const VT_SPEED: flatbuffers::VOffsetT = 10;
+  pub const VT_POSITION: flatbuffers::VOffsetT = 12;
+  pub const VT_DIRECTION: flatbuffers::VOffsetT = 14;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -789,6 +790,7 @@ impl<'a> GCSpawnActorNoti<'a> {
     if let Some(x) = args.position { builder.add_position(x); }
     builder.add_speed(args.speed);
     if let Some(x) = args.color { builder.add_color(x); }
+    if let Some(x) = args.name { builder.add_name(x); }
     builder.finish()
   }
 
@@ -799,6 +801,13 @@ impl<'a> GCSpawnActorNoti<'a> {
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<u64>(GCSpawnActorNoti::VT_ACTOR_IDX, Some(0)).unwrap()}
+  }
+  #[inline]
+  pub fn name(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(GCSpawnActorNoti::VT_NAME, None)}
   }
   #[inline]
   pub fn color(&self) -> Option<&'a Color> {
@@ -838,6 +847,7 @@ impl flatbuffers::Verifiable for GCSpawnActorNoti<'_> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
      .visit_field::<u64>("actor_idx", Self::VT_ACTOR_IDX, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
      .visit_field::<Color>("color", Self::VT_COLOR, false)?
      .visit_field::<f32>("speed", Self::VT_SPEED, false)?
      .visit_field::<Vec2>("position", Self::VT_POSITION, false)?
@@ -848,6 +858,7 @@ impl flatbuffers::Verifiable for GCSpawnActorNoti<'_> {
 }
 pub struct GCSpawnActorNotiArgs<'a> {
     pub actor_idx: u64,
+    pub name: Option<flatbuffers::WIPOffset<&'a str>>,
     pub color: Option<&'a Color>,
     pub speed: f32,
     pub position: Option<&'a Vec2>,
@@ -858,6 +869,7 @@ impl<'a> Default for GCSpawnActorNotiArgs<'a> {
   fn default() -> Self {
     GCSpawnActorNotiArgs {
       actor_idx: 0,
+      name: None,
       color: None,
       speed: 0.0,
       position: None,
@@ -874,6 +886,10 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCSpawnActorNotiBuilder<'a, 'b,
   #[inline]
   pub fn add_actor_idx(&mut self, actor_idx: u64) {
     self.fbb_.push_slot::<u64>(GCSpawnActorNoti::VT_ACTOR_IDX, actor_idx, 0);
+  }
+  #[inline]
+  pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GCSpawnActorNoti::VT_NAME, name);
   }
   #[inline]
   pub fn add_color(&mut self, color: &Color) {
@@ -910,6 +926,7 @@ impl core::fmt::Debug for GCSpawnActorNoti<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let mut ds = f.debug_struct("GCSpawnActorNoti");
       ds.field("actor_idx", &self.actor_idx());
+      ds.field("name", &self.name());
       ds.field("color", &self.color());
       ds.field("speed", &self.speed());
       ds.field("position", &self.position());

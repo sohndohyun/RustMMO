@@ -75,7 +75,7 @@ impl World {
 
         self.counter += 1;
 
-        let pc = Rc::new(RefCell::new(WorldPlayerCharacter::new(
+        let player_character = Rc::new(RefCell::new(WorldPlayerCharacter::new(
             actor_idx,
             name,
             color,
@@ -83,20 +83,21 @@ impl World {
             direction,
             weak_game_user,
         )));
-        self.player_characters.insert(actor_idx, pc.clone());
+        self.player_characters.insert(actor_idx, player_character.clone());
 
+        let pc = player_character.borrow_mut();
         self.broadcast(
             PacketType::GC_SPAWN_ACTOR_NOTI,
             build_gc_spawn_actor_noti(
-                actor_idx,
-                &color,
-                pc.borrow_mut().speed,
-                &position,
-                &direction,
+                pc.actor_idx,
+                &pc.color,
+                pc.speed,
+                &pc.position,
+                &pc.direction,
             ),
         );
 
-        Rc::downgrade(&pc)
+        Rc::downgrade(&player_character)
     }
 
     pub fn broadcast(&mut self, packet_type: PacketType, payload: Vec<u8>) {

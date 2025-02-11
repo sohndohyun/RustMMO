@@ -15,6 +15,7 @@ table GCLoginRes {
 
 table GCSpawnActorNoti {
     actor_idx:ulong;
+    name:string;
     color:Color;
     speed:float;
     position:Vec2;

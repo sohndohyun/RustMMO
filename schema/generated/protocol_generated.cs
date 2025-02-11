@@ -157,17 +157,25 @@ public struct GCSpawnActorNoti : IFlatbufferObject
   public GCSpawnActorNoti __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public ulong ActorIdx { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUlong(o + __p.bb_pos) : (ulong)0; } }
-  public Nexus.Color? Color { get { int o = __p.__offset(6); return o != 0 ? (Nexus.Color?)(new Nexus.Color()).__assign(o + __p.bb_pos, __p.bb) : null; } }
-  public float Speed { get { int o = __p.__offset(8); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
-  public Nexus.Vec2? Position { get { int o = __p.__offset(10); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
-  public Nexus.Vec2? Direction { get { int o = __p.__offset(12); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+  public string Name { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
+#if ENABLE_SPAN_T
+  public Span<byte> GetNameBytes() { return __p.__vector_as_span<byte>(6, 1); }
+#else
+  public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(6); }
+#endif
+  public byte[] GetNameArray() { return __p.__vector_as_array<byte>(6); }
+  public Nexus.Color? Color { get { int o = __p.__offset(8); return o != 0 ? (Nexus.Color?)(new Nexus.Color()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+  public float Speed { get { int o = __p.__offset(10); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
+  public Nexus.Vec2? Position { get { int o = __p.__offset(12); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+  public Nexus.Vec2? Direction { get { int o = __p.__offset(14); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
 
-  public static void StartGCSpawnActorNoti(FlatBufferBuilder builder) { builder.StartTable(5); }
+  public static void StartGCSpawnActorNoti(FlatBufferBuilder builder) { builder.StartTable(6); }
   public static void AddActorIdx(FlatBufferBuilder builder, ulong actorIdx) { builder.AddUlong(0, actorIdx, 0); }
-  public static void AddColor(FlatBufferBuilder builder, Offset<Nexus.Color> colorOffset) { builder.AddStruct(1, colorOffset.Value, 0); }
-  public static void AddSpeed(FlatBufferBuilder builder, float speed) { builder.AddFloat(2, speed, 0.0f); }
-  public static void AddPosition(FlatBufferBuilder builder, Offset<Nexus.Vec2> positionOffset) { builder.AddStruct(3, positionOffset.Value, 0); }
-  public static void AddDirection(FlatBufferBuilder builder, Offset<Nexus.Vec2> directionOffset) { builder.AddStruct(4, directionOffset.Value, 0); }
+  public static void AddName(FlatBufferBuilder builder, StringOffset nameOffset) { builder.AddOffset(1, nameOffset.Value, 0); }
+  public static void AddColor(FlatBufferBuilder builder, Offset<Nexus.Color> colorOffset) { builder.AddStruct(2, colorOffset.Value, 0); }
+  public static void AddSpeed(FlatBufferBuilder builder, float speed) { builder.AddFloat(3, speed, 0.0f); }
+  public static void AddPosition(FlatBufferBuilder builder, Offset<Nexus.Vec2> positionOffset) { builder.AddStruct(4, positionOffset.Value, 0); }
+  public static void AddDirection(FlatBufferBuilder builder, Offset<Nexus.Vec2> directionOffset) { builder.AddStruct(5, directionOffset.Value, 0); }
   public static Offset<Nexus.GCSpawnActorNoti> EndGCSpawnActorNoti(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<Nexus.GCSpawnActorNoti>(o);
@@ -181,10 +189,11 @@ static public class GCSpawnActorNotiVerify
   {
     return verifier.VerifyTableStart(tablePos)
       && verifier.VerifyField(tablePos, 4 /*ActorIdx*/, 8 /*ulong*/, 8, false)
-      && verifier.VerifyField(tablePos, 6 /*Color*/, 4 /*Nexus.Color*/, 1, false)
-      && verifier.VerifyField(tablePos, 8 /*Speed*/, 4 /*float*/, 4, false)
-      && verifier.VerifyField(tablePos, 10 /*Position*/, 8 /*Nexus.Vec2*/, 4, false)
-      && verifier.VerifyField(tablePos, 12 /*Direction*/, 8 /*Nexus.Vec2*/, 4, false)
+      && verifier.VerifyString(tablePos, 6 /*Name*/, false)
+      && verifier.VerifyField(tablePos, 8 /*Color*/, 4 /*Nexus.Color*/, 1, false)
+      && verifier.VerifyField(tablePos, 10 /*Speed*/, 4 /*float*/, 4, false)
+      && verifier.VerifyField(tablePos, 12 /*Position*/, 8 /*Nexus.Vec2*/, 4, false)
+      && verifier.VerifyField(tablePos, 14 /*Direction*/, 8 /*Nexus.Vec2*/, 4, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }

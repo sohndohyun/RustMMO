@@ -11,7 +11,6 @@ enum NetState {
     PendingLogin,
     Login,
     PendingLogout,
-    Logout,
 }
 
 pub struct GameUser {
@@ -62,6 +61,7 @@ impl GameUser {
     }
 
     pub fn on_disconnect(&mut self) {
+        // todo: pending_logout가 되면 world update에서 지워줘야함
         self.net_state = NetState::PendingLogout;
     }
 
