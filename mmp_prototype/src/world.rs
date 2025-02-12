@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
 
-use crate::build_packet::build_gc_spawn_actor_noti;
+use crate::build_packet::*;
 use crate::game_server::GameServer;
 use crate::game_user::GameUser;
 use crate::protocol_generated::nexus::*;
@@ -90,6 +90,7 @@ impl World {
             PacketType::GC_SPAWN_ACTOR_NOTI,
             build_gc_spawn_actor_noti(
                 pc.actor_idx,
+                &pc.name,
                 &pc.color,
                 pc.speed,
                 &pc.position,

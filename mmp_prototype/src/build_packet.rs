@@ -10,13 +10,15 @@ pub fn build_gc_login_res(actor_idx: u64, result: ServerCode) -> Vec<u8> {
     builder.collapse().0 // offset 불필요, 무시 가능
 }
 
-pub fn build_gc_spawn_actor_noti(actor_idx: u64, color: &Color, speed: f32, position: &Vec2, direction: &Vec2) -> Vec<u8> {
+pub fn build_gc_spawn_actor_noti(actor_idx: u64, name: &String, color: &Color, speed: f32, position: &Vec2, direction: &Vec2) -> Vec<u8> {
     let mut builder = FlatBufferBuilder::with_capacity(128);
 
+    let name_offset = builder.create_string(name);
     let root = GCSpawnActorNoti::create(
         &mut builder,
         &GCSpawnActorNotiArgs {
             actor_idx,
+            name: Some(name_offset),
             color: Some(color),
             speed,
             position: Some(position),
