@@ -15,7 +15,7 @@ pub enum Callback {
         message: Vec<u8>,
     },
     Disconnect,
-    None,
+    Empty,
     Close,
 }
 
@@ -45,7 +45,7 @@ impl App {
         match self.to_main_rx.try_recv() {
             Ok(callback) => callback,
             Err(try_recv_err) => match try_recv_err {
-                mpsc::error::TryRecvError::Empty => Callback::None,
+                mpsc::error::TryRecvError::Empty => Callback::Empty,
                 mpsc::error::TryRecvError::Disconnected => Callback::Close,
             },
         }

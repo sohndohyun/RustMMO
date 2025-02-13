@@ -6,6 +6,5 @@ mod world;
 
 #[tokio::main]
 async fn main() {
-    let game_server = game_server::GameServer::new();
-    game_server.borrow_mut().run().await;
+    game_server::GameServer::run(String::from("127.0.0.1:1234"));
 }

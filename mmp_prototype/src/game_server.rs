@@ -1,87 +1,94 @@
-use dsnet::server;
+use dsnet::server::{App, Callback};
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
+use std::time::Instant;
 
 use crate::game_user::GameUser;
 use crate::world::World;
 
+pub enum ToServerApp {
+    Send {
+        idx: u64,
+        packet_type: u16,
+        payload: Vec<u8>,
+    },
+    Disconnect {
+        idx: u64,
+    },
+}
+
 pub struct GameServer {
-    app: Rc<RefCell<server::App>>,
     // clients; hashset?
     users: HashMap<u64, Rc<RefCell<GameUser>>>,
-    self_ref: Weak<RefCell<Self>>,
 
     // 원래는 여러개일수도
-    world: Rc<RefCell<World>>,
+    rc_world: Rc<RefCell<World>>,
 }
 
 impl GameServer {
-    pub fn new() -> Rc<RefCell<Self>> {
-        let game_server = Rc::new(RefCell::new(GameServer {
-            app: Rc::new(RefCell::new(server::App::new())),
+    pub fn run(str_addr: String) {
+        let mut app = App::run(str_addr);
+        let mut server = GameServer {
             users: HashMap::new(),
-            self_ref: Weak::new(),
-            world: Rc::new(RefCell::new(World::new())),
-        }));
+            rc_world: Rc::new(RefCell::new(World::new())),
+        };
 
-        let weak_game_server = Rc::downgrade(&game_server);
-        game_server
-            .borrow_mut()
-            .app
-            .borrow_mut()
-            .set_update_callback(Box::new(move |delta_time| {
-                if let Some(game_server) = weak_game_server.upgrade() {
-                    game_server.borrow_mut().update(delta_time);
+        let (sender, receiver) = std::sync::mpsc::channel();
+
+        let mut start = Instant::now();
+        loop {
+            loop {
+                match app.get_callback() {
+                    Callback::Accept { idx } => server.on_accept(idx, sender.clone()),
+                    Callback::Receive {
+                        idx,
+                        packet_type,
+                        message,
+                    } => server.on_receive(idx, packet_type, message),
+                    Callback::Disconnect { idx } => server.on_disconnect(idx),
+                    Callback::Empty => break,
+                    Callback::Close => return,
                 }
-            }));
+            }
 
-        let weak_game_server = Rc::downgrade(&game_server);
-        game_server
-            .borrow_mut()
-            .app
-            .borrow_mut()
-            .set_on_accept_callback(Box::new(move |idx| {
-                if let Some(game_server) = weak_game_server.upgrade() {
-                    game_server.borrow_mut().on_accept(idx);
+            server.update(start.elapsed().as_millis() as u32);
+            start = Instant::now();
+
+            while let Ok(cmd) = receiver.try_recv() {
+                if let Err(e) = match cmd {
+                    ToServerApp::Send {
+                        idx,
+                        packet_type,
+                        payload,
+                    } => app.send_message(idx, packet_type, payload),
+                    ToServerApp::Disconnect { idx } => app.disconnect(idx),
+                } {
+                    eprintln!("{}", e);
+                    return;
                 }
-            }));
-
-        let weak_game_server = Rc::downgrade(&game_server);
-        game_server
-            .borrow_mut()
-            .app
-            .borrow_mut()
-            .set_on_receive_callback(Box::new(move |idx, packet_type, payload| {
-                if let Some(game_server) = weak_game_server.upgrade() {
-                    game_server
-                        .borrow_mut()
-                        .on_receive(idx, packet_type, payload);
-                }
-            }));
-
-        let weak_game_server = Rc::downgrade(&game_server);
-        game_server
-            .borrow_mut()
-            .app
-            .borrow_mut()
-            .set_on_disconnect_callback(Box::new(move |idx| {
-                if let Some(game_server) = weak_game_server.upgrade() {
-                    game_server.borrow_mut().on_disconnect(idx);
-                }
-            }));
-
-        game_server.borrow_mut().world.borrow_mut().set_game_server(Rc::downgrade(&game_server));
-        game_server.borrow_mut().self_ref = Rc::downgrade(&game_server);
-        game_server
+            }
+        }
     }
 
-    fn update(&mut self, _delta_time: u32) {}
+    fn update(&mut self, delta_time: u32) {
 
-    fn on_accept(&mut self, idx: u64) {
-        if let Some(server) = self.self_ref.upgrade() {
-            self.users.insert(idx, GameUser::new(idx, Rc::downgrade(&server), Rc::downgrade(&self.world)));
+        {
+            let mut world = self.rc_world.borrow_mut();
+            world.delta_time = delta_time;
+            world.update();
         }
+
+        for rc_character in self.rc_world.borrow().player_characters.values() {
+            rc_character.borrow_mut().update();
+        }
+    }
+
+    fn on_accept(&mut self, idx: u64, sender: std::sync::mpsc::Sender<ToServerApp>) {
+        self.users.insert(
+            idx,
+            GameUser::new(idx, sender, Rc::downgrade(&self.rc_world)),
+        );
     }
 
     fn on_receive(&mut self, idx: u64, packet_type: u16, payload: Vec<u8>) {
@@ -94,16 +101,5 @@ impl GameServer {
         if let Some(user) = self.users.get_mut(&idx) {
             user.borrow_mut().on_disconnect();
         }
-    }
-
-    pub async fn run(&mut self) {
-        self.app.borrow_mut().run("127.0.0.1:1234".into()).await
-    }
-
-    pub fn send_packet(&mut self, idx: u64, packet_type: u16, payload: Vec<u8>) {
-        self.app
-            .borrow_mut()
-            .send_message(idx, packet_type, payload)
-            .unwrap_or_else(|e| eprintln!("{:?}", e))
     }
 }

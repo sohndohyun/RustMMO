@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
 use crate::build_packet::*;
-use crate::game_server::GameServer;
+use crate::game_server::{GameServer, ToServerApp};
 use crate::protocol_generated::nexus::*;
 use crate::world::{World, WorldPlayerCharacter};
 
@@ -16,31 +16,34 @@ enum NetState {
 pub struct GameUser {
     idx: u64,
     name: Option<String>,
-    weak_game_server: Weak<RefCell<GameServer>>,
+
     net_state: NetState,
     weak_world: Weak<RefCell<World>>,
     actor: Weak<RefCell<WorldPlayerCharacter>>,
-    self_ref: Weak<RefCell<Self>>,
+
+    send_to_server: std::sync::mpsc::Sender<ToServerApp>,
+    self_ref: Weak<RefCell<GameUser>>,
 }
 
 impl GameUser {
     pub fn new(
         idx: u64,
-        weak_game_server: Weak<RefCell<GameServer>>,
+        send_to_server: std::sync::mpsc::Sender<ToServerApp>,
         weak_world: Weak<RefCell<World>>,
     ) -> Rc<RefCell<Self>> {
-        let game_user = Rc::new(RefCell::new(GameUser {
+        let rc_user = Rc::new(RefCell::new(GameUser {
             idx,
             name: None,
-            weak_game_server,
+            send_to_server,
             net_state: NetState::PendingLogin,
             weak_world,
             actor: Weak::new(),
             self_ref: Weak::new(),
         }));
 
-        game_user.borrow_mut().self_ref = Rc::downgrade(&game_user);
-        game_user
+        rc_user.borrow_mut().self_ref = Rc::downgrade(&rc_user);
+
+        rc_user
     }
 
     pub fn on_packet(&mut self, packet_type: u16, payload: Vec<u8>) {
@@ -52,12 +55,12 @@ impl GameUser {
         };
     }
 
-    pub fn send_packet(&mut self, packet_type: PacketType, payload: Vec<u8>) {
-        if let Some(game_server) = self.weak_game_server.upgrade() {
-            game_server
-                .borrow_mut()
-                .send_packet(self.idx, packet_type.0, payload);
-        }
+    pub fn send_packet(&self, packet_type: PacketType, payload: Vec<u8>) {
+        let _ = self.send_to_server.send(ToServerApp::Send {
+            idx: self.idx,
+            packet_type: packet_type.0,
+            payload,
+        });
     }
 
     pub fn on_disconnect(&mut self) {
@@ -69,23 +72,20 @@ impl GameUser {
         match flatbuffers::root::<CGLoginReq>(&data) {
             Ok(req) => {
                 let mut result = ServerCode::FAILED;
+                let mut actor_idx: u64 = 0;
 
                 if self.net_state == NetState::PendingLogin {
-                    self.net_state = NetState::Login;
-                    self.name = Some(req.name().unwrap().into());
-
                     if let Some(world) = self.weak_world.upgrade() {
-                        world.borrow_mut().spawn_player_character(
+                        self.actor = world.borrow_mut().spawn_player_character( // spawn character
                             self.name.clone().unwrap(),
                             *req.color().unwrap(),
                             self.self_ref.clone(),
                         );
-                    }
-                    // 여기서 world spawn 로직 시작해야함.
-                    result = ServerCode::SUCCESS;
-                }
 
-                let actor_idx: u64 = 0;
+                        actor_idx = self.actor.upgrade().unwrap().borrow().actor_idx;
+                        result = ServerCode::SUCCESS;
+                    }
+                }
 
                 // send gc_login_res
                 self.send_packet(
