@@ -75,18 +75,27 @@ public struct CGLoginReq : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public CGLoginReq __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public string Name { get { int o = __p.__offset(4); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
+  public ulong UserIdx { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUlong(o + __p.bb_pos) : (ulong)0; } }
+  public string Name { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
 #if ENABLE_SPAN_T
-  public Span<byte> GetNameBytes() { return __p.__vector_as_span<byte>(4, 1); }
+  public Span<byte> GetNameBytes() { return __p.__vector_as_span<byte>(6, 1); }
 #else
-  public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(4); }
+  public ArraySegment<byte>? GetNameBytes() { return __p.__vector_as_arraysegment(6); }
 #endif
-  public byte[] GetNameArray() { return __p.__vector_as_array<byte>(4); }
-  public Nexus.Color? Color { get { int o = __p.__offset(6); return o != 0 ? (Nexus.Color?)(new Nexus.Color()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+  public byte[] GetNameArray() { return __p.__vector_as_array<byte>(6); }
+
+  public static Offset<Nexus.CGLoginReq> CreateCGLoginReq(FlatBufferBuilder builder,
+      ulong user_idx = 0,
+      StringOffset nameOffset = default(StringOffset)) {
+    builder.StartTable(2);
+    CGLoginReq.AddUserIdx(builder, user_idx);
+    CGLoginReq.AddName(builder, nameOffset);
+    return CGLoginReq.EndCGLoginReq(builder);
+  }
 
   public static void StartCGLoginReq(FlatBufferBuilder builder) { builder.StartTable(2); }
-  public static void AddName(FlatBufferBuilder builder, StringOffset nameOffset) { builder.AddOffset(0, nameOffset.Value, 0); }
-  public static void AddColor(FlatBufferBuilder builder, Offset<Nexus.Color> colorOffset) { builder.AddStruct(1, colorOffset.Value, 0); }
+  public static void AddUserIdx(FlatBufferBuilder builder, ulong userIdx) { builder.AddUlong(0, userIdx, 0); }
+  public static void AddName(FlatBufferBuilder builder, StringOffset nameOffset) { builder.AddOffset(1, nameOffset.Value, 0); }
   public static Offset<Nexus.CGLoginReq> EndCGLoginReq(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<Nexus.CGLoginReq>(o);
@@ -99,8 +108,8 @@ static public class CGLoginReqVerify
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
     return verifier.VerifyTableStart(tablePos)
-      && verifier.VerifyString(tablePos, 4 /*Name*/, false)
-      && verifier.VerifyField(tablePos, 6 /*Color*/, 4 /*Nexus.Color*/, 1, false)
+      && verifier.VerifyField(tablePos, 4 /*UserIdx*/, 8 /*ulong*/, 8, false)
+      && verifier.VerifyString(tablePos, 6 /*Name*/, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }
@@ -114,20 +123,20 @@ public struct GCLoginRes : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public GCLoginRes __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public ulong ActorIdx { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUlong(o + __p.bb_pos) : (ulong)0; } }
+  public ulong UserIdx { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUlong(o + __p.bb_pos) : (ulong)0; } }
   public Nexus.ServerCode Result { get { int o = __p.__offset(6); return o != 0 ? (Nexus.ServerCode)__p.bb.GetUlong(o + __p.bb_pos) : Nexus.ServerCode.SUCCESS; } }
 
   public static Offset<Nexus.GCLoginRes> CreateGCLoginRes(FlatBufferBuilder builder,
-      ulong actor_idx = 0,
+      ulong user_idx = 0,
       Nexus.ServerCode result = Nexus.ServerCode.SUCCESS) {
     builder.StartTable(2);
     GCLoginRes.AddResult(builder, result);
-    GCLoginRes.AddActorIdx(builder, actor_idx);
+    GCLoginRes.AddUserIdx(builder, user_idx);
     return GCLoginRes.EndGCLoginRes(builder);
   }
 
   public static void StartGCLoginRes(FlatBufferBuilder builder) { builder.StartTable(2); }
-  public static void AddActorIdx(FlatBufferBuilder builder, ulong actorIdx) { builder.AddUlong(0, actorIdx, 0); }
+  public static void AddUserIdx(FlatBufferBuilder builder, ulong userIdx) { builder.AddUlong(0, userIdx, 0); }
   public static void AddResult(FlatBufferBuilder builder, Nexus.ServerCode result) { builder.AddUlong(1, (ulong)result, 0); }
   public static Offset<Nexus.GCLoginRes> EndGCLoginRes(FlatBufferBuilder builder) {
     int o = builder.EndTable();
@@ -141,8 +150,75 @@ static public class GCLoginResVerify
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
     return verifier.VerifyTableStart(tablePos)
-      && verifier.VerifyField(tablePos, 4 /*ActorIdx*/, 8 /*ulong*/, 8, false)
+      && verifier.VerifyField(tablePos, 4 /*UserIdx*/, 8 /*ulong*/, 8, false)
       && verifier.VerifyField(tablePos, 6 /*Result*/, 8 /*Nexus.ServerCode*/, 8, false)
+      && verifier.VerifyTableEnd(tablePos);
+  }
+}
+public struct CGJoinReq : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_1_24(); }
+  public static CGJoinReq GetRootAsCGJoinReq(ByteBuffer _bb) { return GetRootAsCGJoinReq(_bb, new CGJoinReq()); }
+  public static CGJoinReq GetRootAsCGJoinReq(ByteBuffer _bb, CGJoinReq obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
+  public CGJoinReq __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+  public Nexus.Color? Color { get { int o = __p.__offset(4); return o != 0 ? (Nexus.Color?)(new Nexus.Color()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+
+  public static void StartCGJoinReq(FlatBufferBuilder builder) { builder.StartTable(1); }
+  public static void AddColor(FlatBufferBuilder builder, Offset<Nexus.Color> colorOffset) { builder.AddStruct(0, colorOffset.Value, 0); }
+  public static Offset<Nexus.CGJoinReq> EndCGJoinReq(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<Nexus.CGJoinReq>(o);
+  }
+}
+
+
+static public class CGJoinReqVerify
+{
+  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
+  {
+    return verifier.VerifyTableStart(tablePos)
+      && verifier.VerifyField(tablePos, 4 /*Color*/, 4 /*Nexus.Color*/, 1, false)
+      && verifier.VerifyTableEnd(tablePos);
+  }
+}
+public struct GCJoinRes : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_1_24(); }
+  public static GCJoinRes GetRootAsGCJoinRes(ByteBuffer _bb) { return GetRootAsGCJoinRes(_bb, new GCJoinRes()); }
+  public static GCJoinRes GetRootAsGCJoinRes(ByteBuffer _bb, GCJoinRes obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
+  public GCJoinRes __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+  public Nexus.ServerCode Result { get { int o = __p.__offset(4); return o != 0 ? (Nexus.ServerCode)__p.bb.GetUlong(o + __p.bb_pos) : Nexus.ServerCode.SUCCESS; } }
+
+  public static Offset<Nexus.GCJoinRes> CreateGCJoinRes(FlatBufferBuilder builder,
+      Nexus.ServerCode result = Nexus.ServerCode.SUCCESS) {
+    builder.StartTable(1);
+    GCJoinRes.AddResult(builder, result);
+    return GCJoinRes.EndGCJoinRes(builder);
+  }
+
+  public static void StartGCJoinRes(FlatBufferBuilder builder) { builder.StartTable(1); }
+  public static void AddResult(FlatBufferBuilder builder, Nexus.ServerCode result) { builder.AddUlong(0, (ulong)result, 0); }
+  public static Offset<Nexus.GCJoinRes> EndGCJoinRes(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<Nexus.GCJoinRes>(o);
+  }
+}
+
+
+static public class GCJoinResVerify
+{
+  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
+  {
+    return verifier.VerifyTableStart(tablePos)
+      && verifier.VerifyField(tablePos, 4 /*Result*/, 8 /*Nexus.ServerCode*/, 8, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }

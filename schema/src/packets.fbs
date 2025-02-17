@@ -4,12 +4,20 @@ include "structs.fbs";
 namespace Nexus;
 
 table CGLoginReq {
+    user_idx:ulong;
     name:string;
-    color:Color;
 }
 
 table GCLoginRes {
-    actor_idx:ulong;
+    user_idx:ulong;
+    result:ServerCode;
+}
+
+table CGJoinReq {
+    color:Color;
+}
+
+table GCJoinRes {
     result:ServerCode;
 }
 

@@ -1,10 +1,33 @@
 use crate::protocol_generated::nexus::*;
 use flatbuffers::FlatBufferBuilder;
+use std::hash::{DefaultHasher, Hash, Hasher};
 
-pub fn build_gc_login_res(actor_idx: u64, result: ServerCode) -> Vec<u8> {
+pub fn hash_vec_u8(data: &[u8]) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    data.hash(&mut hasher);
+    hasher.finish()
+}
+
+pub fn deref_color(opt_color: Option<&Color>) -> Option<Color> {
+    match opt_color {
+        Some(color) => Some(*color),
+        None => None,
+    }
+}
+
+pub fn build_gc_login_res(user_idx: u64, result: ServerCode) -> Vec<u8> {
     let mut builder = FlatBufferBuilder::with_capacity(64);
     
-    let root = GCLoginRes::create(&mut builder, &GCLoginResArgs { actor_idx, result });
+    let root = GCLoginRes::create(&mut builder, &GCLoginResArgs { user_idx, result });
+
+    builder.finish(root, None);
+    builder.collapse().0 // offset 불필요, 무시 가능
+}
+
+pub fn build_gc_join_res (result: ServerCode) -> Vec<u8> {
+    let mut builder = FlatBufferBuilder::with_capacity(64);
+    
+    let root = GCJoinRes::create(&mut builder, &GCJoinResArgs { result });
 
     builder.finish(root, None);
     builder.collapse().0 // offset 불필요, 무시 가능

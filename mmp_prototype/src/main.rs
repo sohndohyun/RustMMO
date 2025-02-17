@@ -3,6 +3,7 @@ mod protocol_generated;
 mod game_user;
 mod build_packet;
 mod world;
+mod single_channel;
 
 #[tokio::main]
 async fn main() {

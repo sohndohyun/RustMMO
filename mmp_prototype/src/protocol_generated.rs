@@ -3,11 +3,11 @@
 
 // @generated
 
-//use core::mem;
-//use core::cmp::Ordering;
+use core::mem;
+use core::cmp::Ordering;
 
 extern crate flatbuffers;
-//use self::flatbuffers::{EndianScalar, Follow};
+use self::flatbuffers::{EndianScalar, Follow};
 
 #[allow(unused_imports, dead_code)]
 pub mod nexus {
@@ -540,8 +540,8 @@ impl<'a> flatbuffers::Follow<'a> for CGLoginReq<'a> {
 }
 
 impl<'a> CGLoginReq<'a> {
-  pub const VT_NAME: flatbuffers::VOffsetT = 4;
-  pub const VT_COLOR: flatbuffers::VOffsetT = 6;
+  pub const VT_USER_IDX: flatbuffers::VOffsetT = 4;
+  pub const VT_NAME: flatbuffers::VOffsetT = 6;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -553,25 +553,25 @@ impl<'a> CGLoginReq<'a> {
     args: &'args CGLoginReqArgs<'args>
   ) -> flatbuffers::WIPOffset<CGLoginReq<'bldr>> {
     let mut builder = CGLoginReqBuilder::new(_fbb);
-    if let Some(x) = args.color { builder.add_color(x); }
+    builder.add_user_idx(args.user_idx);
     if let Some(x) = args.name { builder.add_name(x); }
     builder.finish()
   }
 
 
   #[inline]
+  pub fn user_idx(&self) -> u64 {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<u64>(CGLoginReq::VT_USER_IDX, Some(0)).unwrap()}
+  }
+  #[inline]
   pub fn name(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(CGLoginReq::VT_NAME, None)}
-  }
-  #[inline]
-  pub fn color(&self) -> Option<&'a Color> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<Color>(CGLoginReq::VT_COLOR, None)}
   }
 }
 
@@ -582,22 +582,22 @@ impl flatbuffers::Verifiable for CGLoginReq<'_> {
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
+     .visit_field::<u64>("user_idx", Self::VT_USER_IDX, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<Color>("color", Self::VT_COLOR, false)?
      .finish();
     Ok(())
   }
 }
 pub struct CGLoginReqArgs<'a> {
+    pub user_idx: u64,
     pub name: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub color: Option<&'a Color>,
 }
 impl<'a> Default for CGLoginReqArgs<'a> {
   #[inline]
   fn default() -> Self {
     CGLoginReqArgs {
+      user_idx: 0,
       name: None,
-      color: None,
     }
   }
 }
@@ -608,12 +608,12 @@ pub struct CGLoginReqBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
 }
 impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> CGLoginReqBuilder<'a, 'b, A> {
   #[inline]
-  pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(CGLoginReq::VT_NAME, name);
+  pub fn add_user_idx(&mut self, user_idx: u64) {
+    self.fbb_.push_slot::<u64>(CGLoginReq::VT_USER_IDX, user_idx, 0);
   }
   #[inline]
-  pub fn add_color(&mut self, color: &Color) {
-    self.fbb_.push_slot_always::<&Color>(CGLoginReq::VT_COLOR, color);
+  pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(CGLoginReq::VT_NAME, name);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> CGLoginReqBuilder<'a, 'b, A> {
@@ -633,8 +633,8 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> CGLoginReqBuilder<'a, 'b, A> {
 impl core::fmt::Debug for CGLoginReq<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let mut ds = f.debug_struct("CGLoginReq");
+      ds.field("user_idx", &self.user_idx());
       ds.field("name", &self.name());
-      ds.field("color", &self.color());
       ds.finish()
   }
 }
@@ -654,7 +654,7 @@ impl<'a> flatbuffers::Follow<'a> for GCLoginRes<'a> {
 }
 
 impl<'a> GCLoginRes<'a> {
-  pub const VT_ACTOR_IDX: flatbuffers::VOffsetT = 4;
+  pub const VT_USER_IDX: flatbuffers::VOffsetT = 4;
   pub const VT_RESULT: flatbuffers::VOffsetT = 6;
 
   #[inline]
@@ -668,17 +668,17 @@ impl<'a> GCLoginRes<'a> {
   ) -> flatbuffers::WIPOffset<GCLoginRes<'bldr>> {
     let mut builder = GCLoginResBuilder::new(_fbb);
     builder.add_result(args.result);
-    builder.add_actor_idx(args.actor_idx);
+    builder.add_user_idx(args.user_idx);
     builder.finish()
   }
 
 
   #[inline]
-  pub fn actor_idx(&self) -> u64 {
+  pub fn user_idx(&self) -> u64 {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<u64>(GCLoginRes::VT_ACTOR_IDX, Some(0)).unwrap()}
+    unsafe { self._tab.get::<u64>(GCLoginRes::VT_USER_IDX, Some(0)).unwrap()}
   }
   #[inline]
   pub fn result(&self) -> ServerCode {
@@ -696,21 +696,21 @@ impl flatbuffers::Verifiable for GCLoginRes<'_> {
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
-     .visit_field::<u64>("actor_idx", Self::VT_ACTOR_IDX, false)?
+     .visit_field::<u64>("user_idx", Self::VT_USER_IDX, false)?
      .visit_field::<ServerCode>("result", Self::VT_RESULT, false)?
      .finish();
     Ok(())
   }
 }
 pub struct GCLoginResArgs {
-    pub actor_idx: u64,
+    pub user_idx: u64,
     pub result: ServerCode,
 }
 impl<'a> Default for GCLoginResArgs {
   #[inline]
   fn default() -> Self {
     GCLoginResArgs {
-      actor_idx: 0,
+      user_idx: 0,
       result: ServerCode::SUCCESS,
     }
   }
@@ -722,8 +722,8 @@ pub struct GCLoginResBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
 }
 impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCLoginResBuilder<'a, 'b, A> {
   #[inline]
-  pub fn add_actor_idx(&mut self, actor_idx: u64) {
-    self.fbb_.push_slot::<u64>(GCLoginRes::VT_ACTOR_IDX, actor_idx, 0);
+  pub fn add_user_idx(&mut self, user_idx: u64) {
+    self.fbb_.push_slot::<u64>(GCLoginRes::VT_USER_IDX, user_idx, 0);
   }
   #[inline]
   pub fn add_result(&mut self, result: ServerCode) {
@@ -747,7 +747,201 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCLoginResBuilder<'a, 'b, A> {
 impl core::fmt::Debug for GCLoginRes<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let mut ds = f.debug_struct("GCLoginRes");
-      ds.field("actor_idx", &self.actor_idx());
+      ds.field("user_idx", &self.user_idx());
+      ds.field("result", &self.result());
+      ds.finish()
+  }
+}
+pub enum CGJoinReqOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct CGJoinReq<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for CGJoinReq<'a> {
+  type Inner = CGJoinReq<'a>;
+  #[inline]
+  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    Self { _tab: flatbuffers::Table::new(buf, loc) }
+  }
+}
+
+impl<'a> CGJoinReq<'a> {
+  pub const VT_COLOR: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+    CGJoinReq { _tab: table }
+  }
+  #[allow(unused_mut)]
+  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+    _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+    args: &'args CGJoinReqArgs<'args>
+  ) -> flatbuffers::WIPOffset<CGJoinReq<'bldr>> {
+    let mut builder = CGJoinReqBuilder::new(_fbb);
+    if let Some(x) = args.color { builder.add_color(x); }
+    builder.finish()
+  }
+
+
+  #[inline]
+  pub fn color(&self) -> Option<&'a Color> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<Color>(CGJoinReq::VT_COLOR, None)}
+  }
+}
+
+impl flatbuffers::Verifiable for CGJoinReq<'_> {
+  #[inline]
+  fn run_verifier(
+    v: &mut flatbuffers::Verifier, pos: usize
+  ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+    use self::flatbuffers::Verifiable;
+    v.visit_table(pos)?
+     .visit_field::<Color>("color", Self::VT_COLOR, false)?
+     .finish();
+    Ok(())
+  }
+}
+pub struct CGJoinReqArgs<'a> {
+    pub color: Option<&'a Color>,
+}
+impl<'a> Default for CGJoinReqArgs<'a> {
+  #[inline]
+  fn default() -> Self {
+    CGJoinReqArgs {
+      color: None,
+    }
+  }
+}
+
+pub struct CGJoinReqBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> CGJoinReqBuilder<'a, 'b, A> {
+  #[inline]
+  pub fn add_color(&mut self, color: &Color) {
+    self.fbb_.push_slot_always::<&Color>(CGJoinReq::VT_COLOR, color);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> CGJoinReqBuilder<'a, 'b, A> {
+    let start = _fbb.start_table();
+    CGJoinReqBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<CGJoinReq<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+impl core::fmt::Debug for CGJoinReq<'_> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    let mut ds = f.debug_struct("CGJoinReq");
+      ds.field("color", &self.color());
+      ds.finish()
+  }
+}
+pub enum GCJoinResOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct GCJoinRes<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for GCJoinRes<'a> {
+  type Inner = GCJoinRes<'a>;
+  #[inline]
+  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    Self { _tab: flatbuffers::Table::new(buf, loc) }
+  }
+}
+
+impl<'a> GCJoinRes<'a> {
+  pub const VT_RESULT: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+    GCJoinRes { _tab: table }
+  }
+  #[allow(unused_mut)]
+  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+    _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+    args: &'args GCJoinResArgs
+  ) -> flatbuffers::WIPOffset<GCJoinRes<'bldr>> {
+    let mut builder = GCJoinResBuilder::new(_fbb);
+    builder.add_result(args.result);
+    builder.finish()
+  }
+
+
+  #[inline]
+  pub fn result(&self) -> ServerCode {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<ServerCode>(GCJoinRes::VT_RESULT, Some(ServerCode::SUCCESS)).unwrap()}
+  }
+}
+
+impl flatbuffers::Verifiable for GCJoinRes<'_> {
+  #[inline]
+  fn run_verifier(
+    v: &mut flatbuffers::Verifier, pos: usize
+  ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+    use self::flatbuffers::Verifiable;
+    v.visit_table(pos)?
+     .visit_field::<ServerCode>("result", Self::VT_RESULT, false)?
+     .finish();
+    Ok(())
+  }
+}
+pub struct GCJoinResArgs {
+    pub result: ServerCode,
+}
+impl<'a> Default for GCJoinResArgs {
+  #[inline]
+  fn default() -> Self {
+    GCJoinResArgs {
+      result: ServerCode::SUCCESS,
+    }
+  }
+}
+
+pub struct GCJoinResBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCJoinResBuilder<'a, 'b, A> {
+  #[inline]
+  pub fn add_result(&mut self, result: ServerCode) {
+    self.fbb_.push_slot::<ServerCode>(GCJoinRes::VT_RESULT, result, ServerCode::SUCCESS);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> GCJoinResBuilder<'a, 'b, A> {
+    let start = _fbb.start_table();
+    GCJoinResBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<GCJoinRes<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+impl core::fmt::Debug for GCJoinRes<'_> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    let mut ds = f.debug_struct("GCJoinRes");
       ds.field("result", &self.result());
       ds.finish()
   }

@@ -1,6 +1,5 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 use std::io::IoSlice;
-use std::time::Instant;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
@@ -10,9 +9,52 @@ use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 use crate::packet_functions::*;
 
+pub struct Session {
+    idx: u64,
+    pending_disconnect: bool,
+    to_send_tx: UnboundedSender<(u16, Vec<u8>)>,
+}
+
+impl Session {
+    fn new(idx: u64, to_send_tx: UnboundedSender<(u16, Vec<u8>)>) -> Session {
+        Session {
+            idx,
+            pending_disconnect: false,
+            to_send_tx,
+        }
+    }
+
+    pub fn get_idx(&self) -> u64 {self.idx}
+    pub fn is_pending_disconnect(&self) -> bool {self.pending_disconnect}
+
+    pub fn send_message(
+        &self,
+        packet_type: u16,
+        message: Vec<u8>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        if self.pending_disconnect == false {
+            self.to_send_tx.send((packet_type, message))?;
+            Ok(())
+        } else {
+            Err(format!("Session {} is pending disconnect", self.idx).into())
+        }
+    }
+
+    pub fn disconnect(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        if self.pending_disconnect == true {
+            Ok(())
+        } else {
+            let result = self.send_message(0, "".into());
+            self.pending_disconnect = true;
+            result
+        }
+    }
+}
+
 pub enum Callback {
     Accept {
         idx: u64,
+        session: Session,
     },
 
     Receive {
@@ -46,37 +88,7 @@ enum NetEvent {
     },
 }
 
-struct Session {
-    idx: u64,
-    pending_disconnect: bool,
-    to_send_tx: UnboundedSender<(u16, Vec<u8>)>,
-}
-
-impl Session {
-    pub fn new(idx: u64, to_send_tx: UnboundedSender<(u16, Vec<u8>)>) -> Session {
-        Session {
-            idx,
-            pending_disconnect: false,
-            to_send_tx,
-        }
-    }
-
-    pub fn send_message(
-        &self,
-        packet_type: u16,
-        message: Vec<u8>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        if self.pending_disconnect == false {
-            self.to_send_tx.send((packet_type, message))?;
-            Ok(())
-        } else {
-            Err(format!("Session {} is pending disconnect", self.idx).into())
-        }
-    }
-}
-
 pub struct App {
-    sessions: HashMap<u64, Session>,
     to_main_rx: UnboundedReceiver<NetEvent>,
 }
 
@@ -89,33 +101,7 @@ impl App {
         });
 
         App {
-            sessions: HashMap::new(),
             to_main_rx,
-        }
-    }
-
-    pub fn send_message(
-        &mut self,
-        idx: u64,
-        packet_type: u16,
-        message: Vec<u8>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(session) = self.sessions.get_mut(&idx) {
-            session.send_message(packet_type, message)
-        } else {
-            Err(format!("Session with ID {} not found", idx).into())
-        }
-    }
-
-    pub fn disconnect(&mut self, idx: u64) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(session) = self.sessions.get_mut(&idx) {
-            if session.pending_disconnect == true {
-                return Ok(());
-            }
-            session.pending_disconnect = true;
-            session.send_message(0, "".into())
-        } else {
-            Err(format!("Session with ID {} not found", idx).into())
         }
     }
 
@@ -181,7 +167,6 @@ impl App {
                 }
                 // 정상적인 읽기 완료 이 안에서 처리 ㄱㄱ
                 Ok(n) => {
-                    // TODO: 여기서 메시지 파싱을 해줘야함
                     ring_buf.extend(recv_buf[0..n].iter());
                     while let Some((packet_type, message)) = check_and_pop_packet(&mut ring_buf) {
                         if let Err(e) = to_main_tx.send(NetEvent::Receive {
@@ -252,8 +237,7 @@ impl App {
         match self.to_main_rx.try_recv() {
             Ok(net_event) => match net_event {
                 NetEvent::Accept { idx, to_send_tx } => {
-                    self.sessions.insert(idx, Session::new(idx, to_send_tx));
-                    return Callback::Accept { idx }
+                    return Callback::Accept { idx, session: Session::new(idx, to_send_tx) }
                 }
                 NetEvent::Receive {
                     idx,
@@ -261,7 +245,6 @@ impl App {
                     message,
                 } => return Callback::Receive{idx, packet_type, message},
                 NetEvent::Disconnect { idx } => {
-                    self.sessions.remove(&idx);
                     return Callback::Disconnect { idx }
                 }
             },
