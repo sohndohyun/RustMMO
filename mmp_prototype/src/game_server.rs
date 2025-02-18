@@ -45,23 +45,23 @@ impl GameServer {
             start = Instant::now();
 
             server.check_world_notify();
+            server.remove_session();
         }
     }
 
     fn update(&mut self, delta_time: u32) {
-
-        self.world.set_delta_time(delta_time);
+        self.world.update(delta_time);
         self.world.run_command();
-
-        for rc_character in self.world.actors.values_mut() {
-            rc_character.update();
-        }
     }
 
     fn check_world_notify(&mut self) {
         for user in self.users.values_mut() {
             user.check_world_notify();
         }
+    }
+
+    fn remove_session(&mut self) {
+        self.users.retain(|_, user| !user.pending_logout());
     }
 
     fn on_accept(&mut self, idx: u64, session: Session, sender: Sender<WorldRequest>) {

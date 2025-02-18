@@ -9,7 +9,6 @@ table CGLoginReq {
 }
 
 table GCLoginRes {
-    user_idx:ulong;
     result:ServerCode;
 }
 
@@ -18,10 +17,11 @@ table CGJoinReq {
 }
 
 table GCJoinRes {
+    actor_idx:ulong;
     result:ServerCode;
 }
 
-table GCSpawnActorNoti {
+table GCSpawnCharacterNoti {
     actor_idx:ulong;
     name:string;
     color:Color;
@@ -30,7 +30,12 @@ table GCSpawnActorNoti {
     direction:Vec2;
 }
 
+table GCRemoveActorNoti {
+    actor_idx:ulong;
+}
+
 table CGChangeMoveDirectionReq {
+    actor_idx:ulong;
     direction:Vec2;
 }
 

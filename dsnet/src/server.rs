@@ -24,8 +24,12 @@ impl Session {
         }
     }
 
-    pub fn get_idx(&self) -> u64 {self.idx}
-    pub fn is_pending_disconnect(&self) -> bool {self.pending_disconnect}
+    pub fn get_idx(&self) -> u64 {
+        self.idx
+    }
+    pub fn is_pending_disconnect(&self) -> bool {
+        self.pending_disconnect
+    }
 
     pub fn send_message(
         &self,
@@ -40,14 +44,12 @@ impl Session {
         }
     }
 
-    pub fn disconnect(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn disconnect(&mut self) {
         if self.pending_disconnect == true {
-            Ok(())
-        } else {
-            let result = self.send_message(0, "".into());
-            self.pending_disconnect = true;
-            result
+            return;
         }
+        let _ = self.send_message(0, "".into());
+        self.pending_disconnect = true;
     }
 }
 
@@ -100,9 +102,7 @@ impl App {
             App::accept_process(str_addr, to_main_tx).await;
         });
 
-        App {
-            to_main_rx,
-        }
+        App { to_main_rx }
     }
 
     async fn accept_process(str_addr: String, to_main_tx: UnboundedSender<NetEvent>) {
@@ -237,16 +237,23 @@ impl App {
         match self.to_main_rx.try_recv() {
             Ok(net_event) => match net_event {
                 NetEvent::Accept { idx, to_send_tx } => {
-                    return Callback::Accept { idx, session: Session::new(idx, to_send_tx) }
+                    return Callback::Accept {
+                        idx,
+                        session: Session::new(idx, to_send_tx),
+                    }
                 }
                 NetEvent::Receive {
                     idx,
                     packet_type,
                     message,
-                } => return Callback::Receive{idx, packet_type, message},
-                NetEvent::Disconnect { idx } => {
-                    return Callback::Disconnect { idx }
+                } => {
+                    return Callback::Receive {
+                        idx,
+                        packet_type,
+                        message,
+                    }
                 }
+                NetEvent::Disconnect { idx } => return Callback::Disconnect { idx },
             },
             Err(try_recv_err) => match try_recv_err {
                 mpsc::error::TryRecvError::Empty => return Callback::Empty,
@@ -254,5 +261,4 @@ impl App {
             },
         }
     }
-
 }

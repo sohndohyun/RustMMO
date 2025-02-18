@@ -106,16 +106,20 @@ impl flatbuffers::SimpleToVerifyInSlice for ServerCode {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_PACKET_TYPE: u16 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_PACKET_TYPE: u16 = 5;
+pub const ENUM_MAX_PACKET_TYPE: u16 = 9;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_PACKET_TYPE: [PacketType; 6] = [
+pub const ENUM_VALUES_PACKET_TYPE: [PacketType; 10] = [
   PacketType::CG_LOGIN_REQ,
   PacketType::GC_LOGIN_RES,
+  PacketType::CG_JOIN_REQ,
+  PacketType::GC_JOIN_RES,
   PacketType::GC_SPAWN_ACTOR_NOTI,
+  PacketType::GC_REMOVE_ACTOR_NOTI,
   PacketType::CG_CHANGE_MOVE_DIRECTION_REQ,
   PacketType::GC_CHANGE_MOVE_DIRECTION_RES,
   PacketType::GC_CHANGE_ACTOR_DIRECTION_NOTI,
+  PacketType::CG_LOGOUT_NOTI,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -125,30 +129,42 @@ pub struct PacketType(pub u16);
 impl PacketType {
   pub const CG_LOGIN_REQ: Self = Self(0);
   pub const GC_LOGIN_RES: Self = Self(1);
-  pub const GC_SPAWN_ACTOR_NOTI: Self = Self(2);
-  pub const CG_CHANGE_MOVE_DIRECTION_REQ: Self = Self(3);
-  pub const GC_CHANGE_MOVE_DIRECTION_RES: Self = Self(4);
-  pub const GC_CHANGE_ACTOR_DIRECTION_NOTI: Self = Self(5);
+  pub const CG_JOIN_REQ: Self = Self(2);
+  pub const GC_JOIN_RES: Self = Self(3);
+  pub const GC_SPAWN_ACTOR_NOTI: Self = Self(4);
+  pub const GC_REMOVE_ACTOR_NOTI: Self = Self(5);
+  pub const CG_CHANGE_MOVE_DIRECTION_REQ: Self = Self(6);
+  pub const GC_CHANGE_MOVE_DIRECTION_RES: Self = Self(7);
+  pub const GC_CHANGE_ACTOR_DIRECTION_NOTI: Self = Self(8);
+  pub const CG_LOGOUT_NOTI: Self = Self(9);
 
   pub const ENUM_MIN: u16 = 0;
-  pub const ENUM_MAX: u16 = 5;
+  pub const ENUM_MAX: u16 = 9;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::CG_LOGIN_REQ,
     Self::GC_LOGIN_RES,
+    Self::CG_JOIN_REQ,
+    Self::GC_JOIN_RES,
     Self::GC_SPAWN_ACTOR_NOTI,
+    Self::GC_REMOVE_ACTOR_NOTI,
     Self::CG_CHANGE_MOVE_DIRECTION_REQ,
     Self::GC_CHANGE_MOVE_DIRECTION_RES,
     Self::GC_CHANGE_ACTOR_DIRECTION_NOTI,
+    Self::CG_LOGOUT_NOTI,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
     match self {
       Self::CG_LOGIN_REQ => Some("CG_LOGIN_REQ"),
       Self::GC_LOGIN_RES => Some("GC_LOGIN_RES"),
+      Self::CG_JOIN_REQ => Some("CG_JOIN_REQ"),
+      Self::GC_JOIN_RES => Some("GC_JOIN_RES"),
       Self::GC_SPAWN_ACTOR_NOTI => Some("GC_SPAWN_ACTOR_NOTI"),
+      Self::GC_REMOVE_ACTOR_NOTI => Some("GC_REMOVE_ACTOR_NOTI"),
       Self::CG_CHANGE_MOVE_DIRECTION_REQ => Some("CG_CHANGE_MOVE_DIRECTION_REQ"),
       Self::GC_CHANGE_MOVE_DIRECTION_RES => Some("GC_CHANGE_MOVE_DIRECTION_RES"),
       Self::GC_CHANGE_ACTOR_DIRECTION_NOTI => Some("GC_CHANGE_ACTOR_DIRECTION_NOTI"),
+      Self::CG_LOGOUT_NOTI => Some("CG_LOGOUT_NOTI"),
       _ => None,
     }
   }
@@ -654,8 +670,7 @@ impl<'a> flatbuffers::Follow<'a> for GCLoginRes<'a> {
 }
 
 impl<'a> GCLoginRes<'a> {
-  pub const VT_USER_IDX: flatbuffers::VOffsetT = 4;
-  pub const VT_RESULT: flatbuffers::VOffsetT = 6;
+  pub const VT_RESULT: flatbuffers::VOffsetT = 4;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -668,18 +683,10 @@ impl<'a> GCLoginRes<'a> {
   ) -> flatbuffers::WIPOffset<GCLoginRes<'bldr>> {
     let mut builder = GCLoginResBuilder::new(_fbb);
     builder.add_result(args.result);
-    builder.add_user_idx(args.user_idx);
     builder.finish()
   }
 
 
-  #[inline]
-  pub fn user_idx(&self) -> u64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<u64>(GCLoginRes::VT_USER_IDX, Some(0)).unwrap()}
-  }
   #[inline]
   pub fn result(&self) -> ServerCode {
     // Safety:
@@ -696,21 +703,18 @@ impl flatbuffers::Verifiable for GCLoginRes<'_> {
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
-     .visit_field::<u64>("user_idx", Self::VT_USER_IDX, false)?
      .visit_field::<ServerCode>("result", Self::VT_RESULT, false)?
      .finish();
     Ok(())
   }
 }
 pub struct GCLoginResArgs {
-    pub user_idx: u64,
     pub result: ServerCode,
 }
 impl<'a> Default for GCLoginResArgs {
   #[inline]
   fn default() -> Self {
     GCLoginResArgs {
-      user_idx: 0,
       result: ServerCode::SUCCESS,
     }
   }
@@ -721,10 +725,6 @@ pub struct GCLoginResBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCLoginResBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_user_idx(&mut self, user_idx: u64) {
-    self.fbb_.push_slot::<u64>(GCLoginRes::VT_USER_IDX, user_idx, 0);
-  }
   #[inline]
   pub fn add_result(&mut self, result: ServerCode) {
     self.fbb_.push_slot::<ServerCode>(GCLoginRes::VT_RESULT, result, ServerCode::SUCCESS);
@@ -747,7 +747,6 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCLoginResBuilder<'a, 'b, A> {
 impl core::fmt::Debug for GCLoginRes<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let mut ds = f.debug_struct("GCLoginRes");
-      ds.field("user_idx", &self.user_idx());
       ds.field("result", &self.result());
       ds.finish()
   }
@@ -865,7 +864,8 @@ impl<'a> flatbuffers::Follow<'a> for GCJoinRes<'a> {
 }
 
 impl<'a> GCJoinRes<'a> {
-  pub const VT_RESULT: flatbuffers::VOffsetT = 4;
+  pub const VT_ACTOR_IDX: flatbuffers::VOffsetT = 4;
+  pub const VT_RESULT: flatbuffers::VOffsetT = 6;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -878,10 +878,18 @@ impl<'a> GCJoinRes<'a> {
   ) -> flatbuffers::WIPOffset<GCJoinRes<'bldr>> {
     let mut builder = GCJoinResBuilder::new(_fbb);
     builder.add_result(args.result);
+    builder.add_actor_idx(args.actor_idx);
     builder.finish()
   }
 
 
+  #[inline]
+  pub fn actor_idx(&self) -> u64 {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<u64>(GCJoinRes::VT_ACTOR_IDX, Some(0)).unwrap()}
+  }
   #[inline]
   pub fn result(&self) -> ServerCode {
     // Safety:
@@ -898,18 +906,21 @@ impl flatbuffers::Verifiable for GCJoinRes<'_> {
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
+     .visit_field::<u64>("actor_idx", Self::VT_ACTOR_IDX, false)?
      .visit_field::<ServerCode>("result", Self::VT_RESULT, false)?
      .finish();
     Ok(())
   }
 }
 pub struct GCJoinResArgs {
+    pub actor_idx: u64,
     pub result: ServerCode,
 }
 impl<'a> Default for GCJoinResArgs {
   #[inline]
   fn default() -> Self {
     GCJoinResArgs {
+      actor_idx: 0,
       result: ServerCode::SUCCESS,
     }
   }
@@ -920,6 +931,10 @@ pub struct GCJoinResBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCJoinResBuilder<'a, 'b, A> {
+  #[inline]
+  pub fn add_actor_idx(&mut self, actor_idx: u64) {
+    self.fbb_.push_slot::<u64>(GCJoinRes::VT_ACTOR_IDX, actor_idx, 0);
+  }
   #[inline]
   pub fn add_result(&mut self, result: ServerCode) {
     self.fbb_.push_slot::<ServerCode>(GCJoinRes::VT_RESULT, result, ServerCode::SUCCESS);
@@ -942,26 +957,27 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCJoinResBuilder<'a, 'b, A> {
 impl core::fmt::Debug for GCJoinRes<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let mut ds = f.debug_struct("GCJoinRes");
+      ds.field("actor_idx", &self.actor_idx());
       ds.field("result", &self.result());
       ds.finish()
   }
 }
-pub enum GCSpawnActorNotiOffset {}
+pub enum GCSpawnCharacterNotiOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
-pub struct GCSpawnActorNoti<'a> {
+pub struct GCSpawnCharacterNoti<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for GCSpawnActorNoti<'a> {
-  type Inner = GCSpawnActorNoti<'a>;
+impl<'a> flatbuffers::Follow<'a> for GCSpawnCharacterNoti<'a> {
+  type Inner = GCSpawnCharacterNoti<'a>;
   #[inline]
   unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
     Self { _tab: flatbuffers::Table::new(buf, loc) }
   }
 }
 
-impl<'a> GCSpawnActorNoti<'a> {
+impl<'a> GCSpawnCharacterNoti<'a> {
   pub const VT_ACTOR_IDX: flatbuffers::VOffsetT = 4;
   pub const VT_NAME: flatbuffers::VOffsetT = 6;
   pub const VT_COLOR: flatbuffers::VOffsetT = 8;
@@ -971,14 +987,14 @@ impl<'a> GCSpawnActorNoti<'a> {
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-    GCSpawnActorNoti { _tab: table }
+    GCSpawnCharacterNoti { _tab: table }
   }
   #[allow(unused_mut)]
   pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
     _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args GCSpawnActorNotiArgs<'args>
-  ) -> flatbuffers::WIPOffset<GCSpawnActorNoti<'bldr>> {
-    let mut builder = GCSpawnActorNotiBuilder::new(_fbb);
+    args: &'args GCSpawnCharacterNotiArgs<'args>
+  ) -> flatbuffers::WIPOffset<GCSpawnCharacterNoti<'bldr>> {
+    let mut builder = GCSpawnCharacterNotiBuilder::new(_fbb);
     builder.add_actor_idx(args.actor_idx);
     if let Some(x) = args.direction { builder.add_direction(x); }
     if let Some(x) = args.position { builder.add_position(x); }
@@ -994,46 +1010,46 @@ impl<'a> GCSpawnActorNoti<'a> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<u64>(GCSpawnActorNoti::VT_ACTOR_IDX, Some(0)).unwrap()}
+    unsafe { self._tab.get::<u64>(GCSpawnCharacterNoti::VT_ACTOR_IDX, Some(0)).unwrap()}
   }
   #[inline]
   pub fn name(&self) -> Option<&'a str> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(GCSpawnActorNoti::VT_NAME, None)}
+    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(GCSpawnCharacterNoti::VT_NAME, None)}
   }
   #[inline]
   pub fn color(&self) -> Option<&'a Color> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<Color>(GCSpawnActorNoti::VT_COLOR, None)}
+    unsafe { self._tab.get::<Color>(GCSpawnCharacterNoti::VT_COLOR, None)}
   }
   #[inline]
   pub fn speed(&self) -> f32 {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<f32>(GCSpawnActorNoti::VT_SPEED, Some(0.0)).unwrap()}
+    unsafe { self._tab.get::<f32>(GCSpawnCharacterNoti::VT_SPEED, Some(0.0)).unwrap()}
   }
   #[inline]
   pub fn position(&self) -> Option<&'a Vec2> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<Vec2>(GCSpawnActorNoti::VT_POSITION, None)}
+    unsafe { self._tab.get::<Vec2>(GCSpawnCharacterNoti::VT_POSITION, None)}
   }
   #[inline]
   pub fn direction(&self) -> Option<&'a Vec2> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<Vec2>(GCSpawnActorNoti::VT_DIRECTION, None)}
+    unsafe { self._tab.get::<Vec2>(GCSpawnCharacterNoti::VT_DIRECTION, None)}
   }
 }
 
-impl flatbuffers::Verifiable for GCSpawnActorNoti<'_> {
+impl flatbuffers::Verifiable for GCSpawnCharacterNoti<'_> {
   #[inline]
   fn run_verifier(
     v: &mut flatbuffers::Verifier, pos: usize
@@ -1050,7 +1066,7 @@ impl flatbuffers::Verifiable for GCSpawnActorNoti<'_> {
     Ok(())
   }
 }
-pub struct GCSpawnActorNotiArgs<'a> {
+pub struct GCSpawnCharacterNotiArgs<'a> {
     pub actor_idx: u64,
     pub name: Option<flatbuffers::WIPOffset<&'a str>>,
     pub color: Option<&'a Color>,
@@ -1058,10 +1074,10 @@ pub struct GCSpawnActorNotiArgs<'a> {
     pub position: Option<&'a Vec2>,
     pub direction: Option<&'a Vec2>,
 }
-impl<'a> Default for GCSpawnActorNotiArgs<'a> {
+impl<'a> Default for GCSpawnCharacterNotiArgs<'a> {
   #[inline]
   fn default() -> Self {
-    GCSpawnActorNotiArgs {
+    GCSpawnCharacterNotiArgs {
       actor_idx: 0,
       name: None,
       color: None,
@@ -1072,59 +1088,156 @@ impl<'a> Default for GCSpawnActorNotiArgs<'a> {
   }
 }
 
-pub struct GCSpawnActorNotiBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+pub struct GCSpawnCharacterNotiBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCSpawnActorNotiBuilder<'a, 'b, A> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCSpawnCharacterNotiBuilder<'a, 'b, A> {
   #[inline]
   pub fn add_actor_idx(&mut self, actor_idx: u64) {
-    self.fbb_.push_slot::<u64>(GCSpawnActorNoti::VT_ACTOR_IDX, actor_idx, 0);
+    self.fbb_.push_slot::<u64>(GCSpawnCharacterNoti::VT_ACTOR_IDX, actor_idx, 0);
   }
   #[inline]
   pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GCSpawnActorNoti::VT_NAME, name);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GCSpawnCharacterNoti::VT_NAME, name);
   }
   #[inline]
   pub fn add_color(&mut self, color: &Color) {
-    self.fbb_.push_slot_always::<&Color>(GCSpawnActorNoti::VT_COLOR, color);
+    self.fbb_.push_slot_always::<&Color>(GCSpawnCharacterNoti::VT_COLOR, color);
   }
   #[inline]
   pub fn add_speed(&mut self, speed: f32) {
-    self.fbb_.push_slot::<f32>(GCSpawnActorNoti::VT_SPEED, speed, 0.0);
+    self.fbb_.push_slot::<f32>(GCSpawnCharacterNoti::VT_SPEED, speed, 0.0);
   }
   #[inline]
   pub fn add_position(&mut self, position: &Vec2) {
-    self.fbb_.push_slot_always::<&Vec2>(GCSpawnActorNoti::VT_POSITION, position);
+    self.fbb_.push_slot_always::<&Vec2>(GCSpawnCharacterNoti::VT_POSITION, position);
   }
   #[inline]
   pub fn add_direction(&mut self, direction: &Vec2) {
-    self.fbb_.push_slot_always::<&Vec2>(GCSpawnActorNoti::VT_DIRECTION, direction);
+    self.fbb_.push_slot_always::<&Vec2>(GCSpawnCharacterNoti::VT_DIRECTION, direction);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> GCSpawnActorNotiBuilder<'a, 'b, A> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> GCSpawnCharacterNotiBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
-    GCSpawnActorNotiBuilder {
+    GCSpawnCharacterNotiBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<GCSpawnActorNoti<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<GCSpawnCharacterNoti<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
 }
 
-impl core::fmt::Debug for GCSpawnActorNoti<'_> {
+impl core::fmt::Debug for GCSpawnCharacterNoti<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    let mut ds = f.debug_struct("GCSpawnActorNoti");
+    let mut ds = f.debug_struct("GCSpawnCharacterNoti");
       ds.field("actor_idx", &self.actor_idx());
       ds.field("name", &self.name());
       ds.field("color", &self.color());
       ds.field("speed", &self.speed());
       ds.field("position", &self.position());
       ds.field("direction", &self.direction());
+      ds.finish()
+  }
+}
+pub enum GCRemoveActorNotiOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct GCRemoveActorNoti<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for GCRemoveActorNoti<'a> {
+  type Inner = GCRemoveActorNoti<'a>;
+  #[inline]
+  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    Self { _tab: flatbuffers::Table::new(buf, loc) }
+  }
+}
+
+impl<'a> GCRemoveActorNoti<'a> {
+  pub const VT_ACTOR_IDX: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+    GCRemoveActorNoti { _tab: table }
+  }
+  #[allow(unused_mut)]
+  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+    _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+    args: &'args GCRemoveActorNotiArgs
+  ) -> flatbuffers::WIPOffset<GCRemoveActorNoti<'bldr>> {
+    let mut builder = GCRemoveActorNotiBuilder::new(_fbb);
+    builder.add_actor_idx(args.actor_idx);
+    builder.finish()
+  }
+
+
+  #[inline]
+  pub fn actor_idx(&self) -> u64 {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<u64>(GCRemoveActorNoti::VT_ACTOR_IDX, Some(0)).unwrap()}
+  }
+}
+
+impl flatbuffers::Verifiable for GCRemoveActorNoti<'_> {
+  #[inline]
+  fn run_verifier(
+    v: &mut flatbuffers::Verifier, pos: usize
+  ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+    use self::flatbuffers::Verifiable;
+    v.visit_table(pos)?
+     .visit_field::<u64>("actor_idx", Self::VT_ACTOR_IDX, false)?
+     .finish();
+    Ok(())
+  }
+}
+pub struct GCRemoveActorNotiArgs {
+    pub actor_idx: u64,
+}
+impl<'a> Default for GCRemoveActorNotiArgs {
+  #[inline]
+  fn default() -> Self {
+    GCRemoveActorNotiArgs {
+      actor_idx: 0,
+    }
+  }
+}
+
+pub struct GCRemoveActorNotiBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> GCRemoveActorNotiBuilder<'a, 'b, A> {
+  #[inline]
+  pub fn add_actor_idx(&mut self, actor_idx: u64) {
+    self.fbb_.push_slot::<u64>(GCRemoveActorNoti::VT_ACTOR_IDX, actor_idx, 0);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> GCRemoveActorNotiBuilder<'a, 'b, A> {
+    let start = _fbb.start_table();
+    GCRemoveActorNotiBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<GCRemoveActorNoti<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+impl core::fmt::Debug for GCRemoveActorNoti<'_> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    let mut ds = f.debug_struct("GCRemoveActorNoti");
+      ds.field("actor_idx", &self.actor_idx());
       ds.finish()
   }
 }
@@ -1144,7 +1257,8 @@ impl<'a> flatbuffers::Follow<'a> for CGChangeMoveDirectionReq<'a> {
 }
 
 impl<'a> CGChangeMoveDirectionReq<'a> {
-  pub const VT_DIRECTION: flatbuffers::VOffsetT = 4;
+  pub const VT_ACTOR_IDX: flatbuffers::VOffsetT = 4;
+  pub const VT_DIRECTION: flatbuffers::VOffsetT = 6;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -1156,11 +1270,19 @@ impl<'a> CGChangeMoveDirectionReq<'a> {
     args: &'args CGChangeMoveDirectionReqArgs<'args>
   ) -> flatbuffers::WIPOffset<CGChangeMoveDirectionReq<'bldr>> {
     let mut builder = CGChangeMoveDirectionReqBuilder::new(_fbb);
+    builder.add_actor_idx(args.actor_idx);
     if let Some(x) = args.direction { builder.add_direction(x); }
     builder.finish()
   }
 
 
+  #[inline]
+  pub fn actor_idx(&self) -> u64 {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<u64>(CGChangeMoveDirectionReq::VT_ACTOR_IDX, Some(0)).unwrap()}
+  }
   #[inline]
   pub fn direction(&self) -> Option<&'a Vec2> {
     // Safety:
@@ -1177,18 +1299,21 @@ impl flatbuffers::Verifiable for CGChangeMoveDirectionReq<'_> {
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
+     .visit_field::<u64>("actor_idx", Self::VT_ACTOR_IDX, false)?
      .visit_field::<Vec2>("direction", Self::VT_DIRECTION, false)?
      .finish();
     Ok(())
   }
 }
 pub struct CGChangeMoveDirectionReqArgs<'a> {
+    pub actor_idx: u64,
     pub direction: Option<&'a Vec2>,
 }
 impl<'a> Default for CGChangeMoveDirectionReqArgs<'a> {
   #[inline]
   fn default() -> Self {
     CGChangeMoveDirectionReqArgs {
+      actor_idx: 0,
       direction: None,
     }
   }
@@ -1199,6 +1324,10 @@ pub struct CGChangeMoveDirectionReqBuilder<'a: 'b, 'b, A: flatbuffers::Allocator
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> CGChangeMoveDirectionReqBuilder<'a, 'b, A> {
+  #[inline]
+  pub fn add_actor_idx(&mut self, actor_idx: u64) {
+    self.fbb_.push_slot::<u64>(CGChangeMoveDirectionReq::VT_ACTOR_IDX, actor_idx, 0);
+  }
   #[inline]
   pub fn add_direction(&mut self, direction: &Vec2) {
     self.fbb_.push_slot_always::<&Vec2>(CGChangeMoveDirectionReq::VT_DIRECTION, direction);
@@ -1221,6 +1350,7 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> CGChangeMoveDirectionReqBuilder
 impl core::fmt::Debug for CGChangeMoveDirectionReq<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let mut ds = f.debug_struct("CGChangeMoveDirectionReq");
+      ds.field("actor_idx", &self.actor_idx());
       ds.field("direction", &self.direction());
       ds.finish()
   }
