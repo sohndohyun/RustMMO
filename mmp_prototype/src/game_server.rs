@@ -67,7 +67,7 @@ impl GameServer {
     fn on_accept(&mut self, idx: u64, session: Session, sender: Sender<WorldRequest>) {
         self.users.insert(
             idx,
-            GameUser::new(idx, session, sender),
+            GameUser::new(session, sender),
         );
     }
 

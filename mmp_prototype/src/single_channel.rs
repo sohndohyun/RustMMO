@@ -12,7 +12,7 @@ pub mod mpsc {
             self.queue.borrow_mut().push_back(value);
         }
 
-        pub fn is_disconnected(&self) -> bool {
+        pub fn _is_disconnected(&self) -> bool {
             Rc::strong_count(&self.queue) == 1
         }
 

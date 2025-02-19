@@ -16,7 +16,6 @@ enum NetState {
 }
 
 pub struct GameUser {
-    session_idx: u64,
     name: Option<String>,
 
     net_state: NetState,
@@ -30,9 +29,8 @@ pub struct GameUser {
 }
 
 impl GameUser {
-    pub fn new(idx: u64, session: Session, command_sender: Sender<WorldRequest>) -> Self {
+    pub fn new(session: Session, command_sender: Sender<WorldRequest>) -> Self {
         GameUser {
-            session_idx: idx,
             name: None,
             net_state: NetState::PendingLogin,
             command_sender,
@@ -86,7 +84,7 @@ impl GameUser {
                 direction,
                 position,
             } => self.notify_change_move_direction(actor_idx, direction, position),
-            WorldNotify::RemoveActor { actor_idx } => todo!(),
+            WorldNotify::RemoveActor { actor_idx } => self.notify_remove_actor(actor_idx),
         }
     }
 
@@ -198,6 +196,10 @@ impl GameUser {
             PacketType::GC_CHANGE_MOVE_DIRECTION_NOTI,
             build_gc_change_move_direction_noti(*actor_idx, direction, position),
         );
+    }
+
+    fn notify_remove_actor(&mut self, actor_idx: &u64) {
+        self.send_packet(PacketType::GC_REMOVE_ACTOR_NOTI, build_gc_remove_actor_noti(*actor_idx));
     }
 
     pub fn pending_logout(&self) -> bool {

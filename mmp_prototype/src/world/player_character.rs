@@ -2,7 +2,6 @@ use crate::protocol_generated::nexus::*;
 use crate::build_packet::build_gc_spawn_character_noti;
 
 pub struct WorldPlayerCharacter {
-    user_idx: u64,
     pub actor_idx: u64,
     name: Option<String>,
     pub color: Option<Color>,
@@ -13,7 +12,6 @@ pub struct WorldPlayerCharacter {
 
 impl WorldPlayerCharacter {
     pub fn new(
-        user_idx: u64,
         actor_idx: u64,
         name: Option<String>,
         color: Option<Color>,
@@ -22,7 +20,6 @@ impl WorldPlayerCharacter {
         direction: Vec2,
     ) -> Self {
         WorldPlayerCharacter {
-            user_idx,
             actor_idx,
             name,
             color,
@@ -37,7 +34,9 @@ impl WorldPlayerCharacter {
         self.direction.set_y(direction.y());
     }
 
-    pub fn update_position(&mut self, delta_time: f32) {
+    pub fn update_position(&mut self, delta_time: u32) {
+        let delta_time: f32 = delta_time as f32;
+
         let mut x = self.position.x();
         let mut y = self.position.y();
 

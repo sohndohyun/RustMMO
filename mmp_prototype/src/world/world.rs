@@ -1,6 +1,5 @@
 use rand::rngs::ThreadRng;
 use rand::Rng;
-use tokio::sync::broadcast;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -59,7 +58,11 @@ impl World {
         temp
     }
 
-    pub fn update(&mut self, delta_time: u32) {}
+    pub fn update(&mut self, delta_time: u32) {
+        for actor in self.actors.values_mut() {
+            actor.update_position(delta_time);
+        }
+    }
 
     fn command_join(
         &mut self,
@@ -82,7 +85,7 @@ impl World {
         let actor_idx = self.alloc_actor_idx();
 
         let character =
-            WorldPlayerCharacter::new(user_idx, actor_idx, name, color, speed, position, direction);
+            WorldPlayerCharacter::new(actor_idx, name, color, speed, position, direction);
 
         self.broadcast_notify(WorldNotify::SomeoneJoin {
             character: character.into_spawn_noti_vec(),
