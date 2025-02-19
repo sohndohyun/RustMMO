@@ -69,26 +69,16 @@ pub fn build_gc_remove_actor_noti(actor_idx: u64) -> Vec<u8> {
     builder.collapse().0
 }
 
-pub fn build_gc_change_move_direction_res(result: ServerCode) -> Vec<u8> {
-    let mut builder = FlatBufferBuilder::with_capacity(32);
-
-    let root =
-        GCChangeMoveDirectionRes::create(&mut builder, &GCChangeMoveDirectionResArgs { result });
-
-    builder.finish(root, None);
-    builder.collapse().0
-}
-
-pub fn build_gc_change_actor_direction_noti(
+pub fn build_gc_change_move_direction_noti(
     actor_idx: u64,
     direction: &Vec2,
     position: &Vec2,
 ) -> Vec<u8> {
     let mut builder = FlatBufferBuilder::with_capacity(128);
 
-    let root = GCChangeActorDirectionNoti::create(
+    let root = GCChangeMoveDirectionNoti::create(
         &mut builder,
-        &GCChangeActorDirectionNotiArgs {
+        &GCChangeMoveDirectionNotiArgs {
             actor_idx,
             direction: Some(direction),
             position: Some(position),

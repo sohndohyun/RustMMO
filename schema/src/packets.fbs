@@ -34,16 +34,12 @@ table GCRemoveActorNoti {
     actor_idx:ulong;
 }
 
-table CGChangeMoveDirectionReq {
+table CGChangeMoveDirectionNoti {
     actor_idx:ulong;
     direction:Vec2;
 }
 
-table GCChangeMoveDirectionRes {
-    result:ServerCode;
-}
-
-table GCChangeActorDirectionNoti {
+table GCChangeMoveDirectionNoti {
     actor_idx:ulong;
     direction:Vec2;
     position:Vec2;

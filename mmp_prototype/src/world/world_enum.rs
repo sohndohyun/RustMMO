@@ -12,7 +12,7 @@ pub enum WorldRequest {
         color: Option<Color>,
         sender: Sender<Rc<RefCell<WorldNotify>>>,
     },
-    ChangeDirection {
+    ChangeMoveDirection {
         user_idx: u64,
         direction: Vec2,
     },
@@ -24,4 +24,6 @@ pub enum WorldRequest {
 pub enum WorldNotify {
     CurrentWorldInfo { hash_key:u64, actor_idx: u64, characters: Vec<Vec<u8>> },
     SomeoneJoin { character: Vec<u8> },
+    ChangeMoveDirection {  actor_idx: u64, direction: Vec2, position: Vec2},
+    RemoveActor { actor_idx: u64 }
 }

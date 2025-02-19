@@ -1,8 +1,8 @@
 use rand::rngs::ThreadRng;
 use rand::Rng;
+use tokio::sync::broadcast;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::ops::Add;
 use std::rc::Rc;
 
 use crate::protocol_generated::nexus::*;
@@ -13,7 +13,9 @@ use crate::world::world_enum::{WorldNotify, WorldRequest};
 pub struct World {
     counter: u64,
     rnd: ThreadRng,
+
     actors: HashMap<u64, WorldPlayerCharacter>,
+    user_actor_idx: HashMap<u64, u64>,
 
     request_receiver: Receiver<WorldRequest>,
     response_sender: HashMap<u64, Sender<Rc<RefCell<WorldNotify>>>>,
@@ -23,10 +25,12 @@ impl World {
     pub fn new(receiver: Receiver<WorldRequest>) -> Self {
         World {
             counter: 1,
+            rnd: rand::rng(),
+
             actors: HashMap::new(),
+            user_actor_idx: HashMap::new(),
             request_receiver: receiver,
             response_sender: HashMap::new(),
-            rnd: rand::rng(),
         }
     }
 
@@ -40,10 +44,10 @@ impl World {
                     color,
                     sender,
                 } => self.command_join(hash_key, user_idx, name, color, sender),
-                WorldRequest::ChangeDirection {
+                WorldRequest::ChangeMoveDirection {
                     user_idx,
                     direction,
-                } => todo!(),
+                } => self.command_change_direction(user_idx, direction),
                 WorldRequest::Leave { user_idx } => self.command_leave(user_idx),
             }
         }
@@ -84,6 +88,7 @@ impl World {
             character: character.into_spawn_noti_vec(),
         });
         self.actors.insert(actor_idx, character);
+        self.user_actor_idx.insert(user_idx, actor_idx);
 
         sender.send(Rc::new(RefCell::new(WorldNotify::CurrentWorldInfo {
             hash_key,
@@ -97,8 +102,26 @@ impl World {
         self.response_sender.insert(user_idx, sender);
     }
 
+    fn command_change_direction(&mut self, user_idx: u64, direction: Vec2) {
+        if let Some(actor_idx) = self.user_actor_idx.get(&user_idx) {
+            if let Some(character) = self.actors.get_mut(&actor_idx) {
+                character.change_direction(direction);
+                let position = character.position;
+                self.broadcast_notify(WorldNotify::ChangeMoveDirection { actor_idx: *actor_idx, direction, position });
+            }
+        }
+    }
+
     fn command_leave(&mut self, user_idx: u64) {
-        todo!()
+        // 여기선 일단 그냥 없애버릴 거임... 타이머 기능 추가하면 타이머 두고 액터 삭제 또는... 존버해서 유저 재접속하면 이어주는식으로 할거임.
+        self.response_sender.remove(&user_idx);
+
+        if let Some(actor_idx) = self.user_actor_idx.get(&user_idx) {
+            self.actors.remove(&actor_idx);
+            self.broadcast_notify(WorldNotify::RemoveActor { actor_idx: *actor_idx });
+        }
+
+        self.user_actor_idx.remove(&user_idx);
     }
 
     fn broadcast_notify(&self, notify: WorldNotify) {
@@ -107,4 +130,5 @@ impl World {
             sender.send(rc_notify.clone());
         }
     }
+
 }

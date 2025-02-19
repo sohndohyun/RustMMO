@@ -23,10 +23,9 @@ public enum PacketType : ushort
   GC_JOIN_RES = 3,
   GC_SPAWN_ACTOR_NOTI = 4,
   GC_REMOVE_ACTOR_NOTI = 5,
-  CG_CHANGE_MOVE_DIRECTION_REQ = 6,
-  GC_CHANGE_MOVE_DIRECTION_RES = 7,
-  GC_CHANGE_ACTOR_DIRECTION_NOTI = 8,
-  CG_LOGOUT_NOTI = 9,
+  CG_CHANGE_MOVE_DIRECTION_NOTI = 6,
+  GC_CHANGE_MOVE_DIRECTION_NOTI = 7,
+  CG_LOGOUT_NOTI = 8,
 };
 
 public struct Color : IFlatbufferObject
@@ -314,30 +313,30 @@ static public class GCRemoveActorNotiVerify
       && verifier.VerifyTableEnd(tablePos);
   }
 }
-public struct CGChangeMoveDirectionReq : IFlatbufferObject
+public struct CGChangeMoveDirectionNoti : IFlatbufferObject
 {
   private Table __p;
   public ByteBuffer ByteBuffer { get { return __p.bb; } }
   public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_1_24(); }
-  public static CGChangeMoveDirectionReq GetRootAsCGChangeMoveDirectionReq(ByteBuffer _bb) { return GetRootAsCGChangeMoveDirectionReq(_bb, new CGChangeMoveDirectionReq()); }
-  public static CGChangeMoveDirectionReq GetRootAsCGChangeMoveDirectionReq(ByteBuffer _bb, CGChangeMoveDirectionReq obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public static CGChangeMoveDirectionNoti GetRootAsCGChangeMoveDirectionNoti(ByteBuffer _bb) { return GetRootAsCGChangeMoveDirectionNoti(_bb, new CGChangeMoveDirectionNoti()); }
+  public static CGChangeMoveDirectionNoti GetRootAsCGChangeMoveDirectionNoti(ByteBuffer _bb, CGChangeMoveDirectionNoti obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
-  public CGChangeMoveDirectionReq __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+  public CGChangeMoveDirectionNoti __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public ulong ActorIdx { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUlong(o + __p.bb_pos) : (ulong)0; } }
   public Nexus.Vec2? Direction { get { int o = __p.__offset(6); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
 
-  public static void StartCGChangeMoveDirectionReq(FlatBufferBuilder builder) { builder.StartTable(2); }
+  public static void StartCGChangeMoveDirectionNoti(FlatBufferBuilder builder) { builder.StartTable(2); }
   public static void AddActorIdx(FlatBufferBuilder builder, ulong actorIdx) { builder.AddUlong(0, actorIdx, 0); }
   public static void AddDirection(FlatBufferBuilder builder, Offset<Nexus.Vec2> directionOffset) { builder.AddStruct(1, directionOffset.Value, 0); }
-  public static Offset<Nexus.CGChangeMoveDirectionReq> EndCGChangeMoveDirectionReq(FlatBufferBuilder builder) {
+  public static Offset<Nexus.CGChangeMoveDirectionNoti> EndCGChangeMoveDirectionNoti(FlatBufferBuilder builder) {
     int o = builder.EndTable();
-    return new Offset<Nexus.CGChangeMoveDirectionReq>(o);
+    return new Offset<Nexus.CGChangeMoveDirectionNoti>(o);
   }
 }
 
 
-static public class CGChangeMoveDirectionReqVerify
+static public class CGChangeMoveDirectionNotiVerify
 {
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
@@ -347,69 +346,32 @@ static public class CGChangeMoveDirectionReqVerify
       && verifier.VerifyTableEnd(tablePos);
   }
 }
-public struct GCChangeMoveDirectionRes : IFlatbufferObject
+public struct GCChangeMoveDirectionNoti : IFlatbufferObject
 {
   private Table __p;
   public ByteBuffer ByteBuffer { get { return __p.bb; } }
   public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_1_24(); }
-  public static GCChangeMoveDirectionRes GetRootAsGCChangeMoveDirectionRes(ByteBuffer _bb) { return GetRootAsGCChangeMoveDirectionRes(_bb, new GCChangeMoveDirectionRes()); }
-  public static GCChangeMoveDirectionRes GetRootAsGCChangeMoveDirectionRes(ByteBuffer _bb, GCChangeMoveDirectionRes obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public static GCChangeMoveDirectionNoti GetRootAsGCChangeMoveDirectionNoti(ByteBuffer _bb) { return GetRootAsGCChangeMoveDirectionNoti(_bb, new GCChangeMoveDirectionNoti()); }
+  public static GCChangeMoveDirectionNoti GetRootAsGCChangeMoveDirectionNoti(ByteBuffer _bb, GCChangeMoveDirectionNoti obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
-  public GCChangeMoveDirectionRes __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
-
-  public Nexus.ServerCode Result { get { int o = __p.__offset(4); return o != 0 ? (Nexus.ServerCode)__p.bb.GetUlong(o + __p.bb_pos) : Nexus.ServerCode.SUCCESS; } }
-
-  public static Offset<Nexus.GCChangeMoveDirectionRes> CreateGCChangeMoveDirectionRes(FlatBufferBuilder builder,
-      Nexus.ServerCode result = Nexus.ServerCode.SUCCESS) {
-    builder.StartTable(1);
-    GCChangeMoveDirectionRes.AddResult(builder, result);
-    return GCChangeMoveDirectionRes.EndGCChangeMoveDirectionRes(builder);
-  }
-
-  public static void StartGCChangeMoveDirectionRes(FlatBufferBuilder builder) { builder.StartTable(1); }
-  public static void AddResult(FlatBufferBuilder builder, Nexus.ServerCode result) { builder.AddUlong(0, (ulong)result, 0); }
-  public static Offset<Nexus.GCChangeMoveDirectionRes> EndGCChangeMoveDirectionRes(FlatBufferBuilder builder) {
-    int o = builder.EndTable();
-    return new Offset<Nexus.GCChangeMoveDirectionRes>(o);
-  }
-}
-
-
-static public class GCChangeMoveDirectionResVerify
-{
-  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
-  {
-    return verifier.VerifyTableStart(tablePos)
-      && verifier.VerifyField(tablePos, 4 /*Result*/, 8 /*Nexus.ServerCode*/, 8, false)
-      && verifier.VerifyTableEnd(tablePos);
-  }
-}
-public struct GCChangeActorDirectionNoti : IFlatbufferObject
-{
-  private Table __p;
-  public ByteBuffer ByteBuffer { get { return __p.bb; } }
-  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_1_24(); }
-  public static GCChangeActorDirectionNoti GetRootAsGCChangeActorDirectionNoti(ByteBuffer _bb) { return GetRootAsGCChangeActorDirectionNoti(_bb, new GCChangeActorDirectionNoti()); }
-  public static GCChangeActorDirectionNoti GetRootAsGCChangeActorDirectionNoti(ByteBuffer _bb, GCChangeActorDirectionNoti obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
-  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
-  public GCChangeActorDirectionNoti __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+  public GCChangeMoveDirectionNoti __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public ulong ActorIdx { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUlong(o + __p.bb_pos) : (ulong)0; } }
   public Nexus.Vec2? Direction { get { int o = __p.__offset(6); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
   public Nexus.Vec2? Position { get { int o = __p.__offset(8); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
 
-  public static void StartGCChangeActorDirectionNoti(FlatBufferBuilder builder) { builder.StartTable(3); }
+  public static void StartGCChangeMoveDirectionNoti(FlatBufferBuilder builder) { builder.StartTable(3); }
   public static void AddActorIdx(FlatBufferBuilder builder, ulong actorIdx) { builder.AddUlong(0, actorIdx, 0); }
   public static void AddDirection(FlatBufferBuilder builder, Offset<Nexus.Vec2> directionOffset) { builder.AddStruct(1, directionOffset.Value, 0); }
   public static void AddPosition(FlatBufferBuilder builder, Offset<Nexus.Vec2> positionOffset) { builder.AddStruct(2, positionOffset.Value, 0); }
-  public static Offset<Nexus.GCChangeActorDirectionNoti> EndGCChangeActorDirectionNoti(FlatBufferBuilder builder) {
+  public static Offset<Nexus.GCChangeMoveDirectionNoti> EndGCChangeMoveDirectionNoti(FlatBufferBuilder builder) {
     int o = builder.EndTable();
-    return new Offset<Nexus.GCChangeActorDirectionNoti>(o);
+    return new Offset<Nexus.GCChangeMoveDirectionNoti>(o);
   }
 }
 
 
-static public class GCChangeActorDirectionNotiVerify
+static public class GCChangeMoveDirectionNotiVerify
 {
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
