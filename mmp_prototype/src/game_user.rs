@@ -177,7 +177,6 @@ impl GameUser {
         for character in characters {
             self.send_packet(PacketType::GC_SPAWN_ACTOR_NOTI, character.to_vec());
         }
-
         if let Some(index) = self.packet_hashes.iter().position(|&h| h == *hash_key) {
             self.packet_hashes.remove(index);
             self.send_packet(

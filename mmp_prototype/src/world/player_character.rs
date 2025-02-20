@@ -35,7 +35,11 @@ impl WorldPlayerCharacter {
     }
 
     pub fn update_position(&mut self, delta_time: u32) {
-        let delta_time: f32 = delta_time as f32;
+        if self.direction.x() == 0. && self.direction.y() == 0. {
+            return;
+        }
+
+        let delta_time: f32 = delta_time as f32 * 0.001;
 
         let mut x = self.position.x();
         let mut y = self.position.y();

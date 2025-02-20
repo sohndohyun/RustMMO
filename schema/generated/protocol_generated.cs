@@ -35,17 +35,17 @@ public struct Color : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Struct(_i, _bb); }
   public Color __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public sbyte R { get { return __p.bb.GetSbyte(__p.bb_pos + 0); } }
-  public sbyte G { get { return __p.bb.GetSbyte(__p.bb_pos + 1); } }
-  public sbyte B { get { return __p.bb.GetSbyte(__p.bb_pos + 2); } }
-  public sbyte A { get { return __p.bb.GetSbyte(__p.bb_pos + 3); } }
+  public byte R { get { return __p.bb.Get(__p.bb_pos + 0); } }
+  public byte G { get { return __p.bb.Get(__p.bb_pos + 1); } }
+  public byte B { get { return __p.bb.Get(__p.bb_pos + 2); } }
+  public byte A { get { return __p.bb.Get(__p.bb_pos + 3); } }
 
-  public static Offset<Nexus.Color> CreateColor(FlatBufferBuilder builder, sbyte R, sbyte G, sbyte B, sbyte A) {
+  public static Offset<Nexus.Color> CreateColor(FlatBufferBuilder builder, byte R, byte G, byte B, byte A) {
     builder.Prep(1, 4);
-    builder.PutSbyte(A);
-    builder.PutSbyte(B);
-    builder.PutSbyte(G);
-    builder.PutSbyte(R);
+    builder.PutByte(A);
+    builder.PutByte(B);
+    builder.PutByte(G);
+    builder.PutByte(R);
     return new Offset<Nexus.Color>(builder.Offset);
   }
 }
@@ -323,12 +323,10 @@ public struct CGChangeMoveDirectionNoti : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public CGChangeMoveDirectionNoti __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public ulong ActorIdx { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUlong(o + __p.bb_pos) : (ulong)0; } }
-  public Nexus.Vec2? Direction { get { int o = __p.__offset(6); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+  public Nexus.Vec2? Direction { get { int o = __p.__offset(4); return o != 0 ? (Nexus.Vec2?)(new Nexus.Vec2()).__assign(o + __p.bb_pos, __p.bb) : null; } }
 
-  public static void StartCGChangeMoveDirectionNoti(FlatBufferBuilder builder) { builder.StartTable(2); }
-  public static void AddActorIdx(FlatBufferBuilder builder, ulong actorIdx) { builder.AddUlong(0, actorIdx, 0); }
-  public static void AddDirection(FlatBufferBuilder builder, Offset<Nexus.Vec2> directionOffset) { builder.AddStruct(1, directionOffset.Value, 0); }
+  public static void StartCGChangeMoveDirectionNoti(FlatBufferBuilder builder) { builder.StartTable(1); }
+  public static void AddDirection(FlatBufferBuilder builder, Offset<Nexus.Vec2> directionOffset) { builder.AddStruct(0, directionOffset.Value, 0); }
   public static Offset<Nexus.CGChangeMoveDirectionNoti> EndCGChangeMoveDirectionNoti(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<Nexus.CGChangeMoveDirectionNoti>(o);
@@ -341,8 +339,7 @@ static public class CGChangeMoveDirectionNotiVerify
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
     return verifier.VerifyTableStart(tablePos)
-      && verifier.VerifyField(tablePos, 4 /*ActorIdx*/, 8 /*ulong*/, 8, false)
-      && verifier.VerifyField(tablePos, 6 /*Direction*/, 8 /*Nexus.Vec2*/, 4, false)
+      && verifier.VerifyField(tablePos, 4 /*Direction*/, 8 /*Nexus.Vec2*/, 4, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }

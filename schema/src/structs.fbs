@@ -1,10 +1,10 @@
 namespace Nexus;
 
 struct Color {
-    r: byte;
-    g: byte;
-    b: byte;
-    a: byte;
+    r: ubyte;
+    g: ubyte;
+    b: ubyte;
+    a: ubyte;
 }
 
 struct Vec2 {

@@ -21,7 +21,7 @@ pub fn build_gc_login_res(result: ServerCode) -> Vec<u8> {
     let root = GCLoginRes::create(&mut builder, &GCLoginResArgs { result });
 
     builder.finish(root, None);
-    builder.collapse().0 // offset 불필요, 무시 가능
+    builder.finished_data().to_vec()
 }
 
 pub fn build_gc_join_res(actor_idx: u64, result: ServerCode) -> Vec<u8> {
@@ -30,7 +30,7 @@ pub fn build_gc_join_res(actor_idx: u64, result: ServerCode) -> Vec<u8> {
     let root = GCJoinRes::create(&mut builder, &GCJoinResArgs { actor_idx, result });
 
     builder.finish(root, None);
-    builder.collapse().0 // offset 불필요, 무시 가능
+    builder.finished_data().to_vec()
 }
 
 pub fn build_gc_spawn_character_noti(
@@ -58,7 +58,7 @@ pub fn build_gc_spawn_character_noti(
     );
 
     builder.finish(root, None);
-    builder.collapse().0
+    builder.finished_data().to_vec()
 }
 
 pub fn build_gc_remove_actor_noti(actor_idx: u64) -> Vec<u8> {
@@ -66,7 +66,7 @@ pub fn build_gc_remove_actor_noti(actor_idx: u64) -> Vec<u8> {
     let root = GCRemoveActorNoti::create(&mut builder, &GCRemoveActorNotiArgs { actor_idx });
 
     builder.finish(root, None);
-    builder.collapse().0
+    builder.finished_data().to_vec()
 }
 
 pub fn build_gc_change_move_direction_noti(
@@ -86,5 +86,5 @@ pub fn build_gc_change_move_direction_noti(
     );
 
     builder.finish(root, None);
-    builder.collapse().0
+    builder.finished_data().to_vec()
 }

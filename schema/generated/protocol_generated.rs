@@ -277,10 +277,10 @@ impl<'a> flatbuffers::Verifiable for Color {
 impl<'a> Color {
   #[allow(clippy::too_many_arguments)]
   pub fn new(
-    r: i8,
-    g: i8,
-    b: i8,
-    a: i8,
+    r: u8,
+    g: u8,
+    b: u8,
+    a: u8,
   ) -> Self {
     let mut s = Self([0; 4]);
     s.set_r(r);
@@ -290,8 +290,8 @@ impl<'a> Color {
     s
   }
 
-  pub fn r(&self) -> i8 {
-    let mut mem = core::mem::MaybeUninit::<<i8 as EndianScalar>::Scalar>::uninit();
+  pub fn r(&self) -> u8 {
+    let mut mem = core::mem::MaybeUninit::<<u8 as EndianScalar>::Scalar>::uninit();
     // Safety:
     // Created from a valid Table for this object
     // Which contains a valid value in this slot
@@ -299,13 +299,13 @@ impl<'a> Color {
       core::ptr::copy_nonoverlapping(
         self.0[0..].as_ptr(),
         mem.as_mut_ptr() as *mut u8,
-        core::mem::size_of::<<i8 as EndianScalar>::Scalar>(),
+        core::mem::size_of::<<u8 as EndianScalar>::Scalar>(),
       );
       mem.assume_init()
     })
   }
 
-  pub fn set_r(&mut self, x: i8) {
+  pub fn set_r(&mut self, x: u8) {
     let x_le = x.to_little_endian();
     // Safety:
     // Created from a valid Table for this object
@@ -314,13 +314,13 @@ impl<'a> Color {
       core::ptr::copy_nonoverlapping(
         &x_le as *const _ as *const u8,
         self.0[0..].as_mut_ptr(),
-        core::mem::size_of::<<i8 as EndianScalar>::Scalar>(),
+        core::mem::size_of::<<u8 as EndianScalar>::Scalar>(),
       );
     }
   }
 
-  pub fn g(&self) -> i8 {
-    let mut mem = core::mem::MaybeUninit::<<i8 as EndianScalar>::Scalar>::uninit();
+  pub fn g(&self) -> u8 {
+    let mut mem = core::mem::MaybeUninit::<<u8 as EndianScalar>::Scalar>::uninit();
     // Safety:
     // Created from a valid Table for this object
     // Which contains a valid value in this slot
@@ -328,13 +328,13 @@ impl<'a> Color {
       core::ptr::copy_nonoverlapping(
         self.0[1..].as_ptr(),
         mem.as_mut_ptr() as *mut u8,
-        core::mem::size_of::<<i8 as EndianScalar>::Scalar>(),
+        core::mem::size_of::<<u8 as EndianScalar>::Scalar>(),
       );
       mem.assume_init()
     })
   }
 
-  pub fn set_g(&mut self, x: i8) {
+  pub fn set_g(&mut self, x: u8) {
     let x_le = x.to_little_endian();
     // Safety:
     // Created from a valid Table for this object
@@ -343,13 +343,13 @@ impl<'a> Color {
       core::ptr::copy_nonoverlapping(
         &x_le as *const _ as *const u8,
         self.0[1..].as_mut_ptr(),
-        core::mem::size_of::<<i8 as EndianScalar>::Scalar>(),
+        core::mem::size_of::<<u8 as EndianScalar>::Scalar>(),
       );
     }
   }
 
-  pub fn b(&self) -> i8 {
-    let mut mem = core::mem::MaybeUninit::<<i8 as EndianScalar>::Scalar>::uninit();
+  pub fn b(&self) -> u8 {
+    let mut mem = core::mem::MaybeUninit::<<u8 as EndianScalar>::Scalar>::uninit();
     // Safety:
     // Created from a valid Table for this object
     // Which contains a valid value in this slot
@@ -357,13 +357,13 @@ impl<'a> Color {
       core::ptr::copy_nonoverlapping(
         self.0[2..].as_ptr(),
         mem.as_mut_ptr() as *mut u8,
-        core::mem::size_of::<<i8 as EndianScalar>::Scalar>(),
+        core::mem::size_of::<<u8 as EndianScalar>::Scalar>(),
       );
       mem.assume_init()
     })
   }
 
-  pub fn set_b(&mut self, x: i8) {
+  pub fn set_b(&mut self, x: u8) {
     let x_le = x.to_little_endian();
     // Safety:
     // Created from a valid Table for this object
@@ -372,13 +372,13 @@ impl<'a> Color {
       core::ptr::copy_nonoverlapping(
         &x_le as *const _ as *const u8,
         self.0[2..].as_mut_ptr(),
-        core::mem::size_of::<<i8 as EndianScalar>::Scalar>(),
+        core::mem::size_of::<<u8 as EndianScalar>::Scalar>(),
       );
     }
   }
 
-  pub fn a(&self) -> i8 {
-    let mut mem = core::mem::MaybeUninit::<<i8 as EndianScalar>::Scalar>::uninit();
+  pub fn a(&self) -> u8 {
+    let mut mem = core::mem::MaybeUninit::<<u8 as EndianScalar>::Scalar>::uninit();
     // Safety:
     // Created from a valid Table for this object
     // Which contains a valid value in this slot
@@ -386,13 +386,13 @@ impl<'a> Color {
       core::ptr::copy_nonoverlapping(
         self.0[3..].as_ptr(),
         mem.as_mut_ptr() as *mut u8,
-        core::mem::size_of::<<i8 as EndianScalar>::Scalar>(),
+        core::mem::size_of::<<u8 as EndianScalar>::Scalar>(),
       );
       mem.assume_init()
     })
   }
 
-  pub fn set_a(&mut self, x: i8) {
+  pub fn set_a(&mut self, x: u8) {
     let x_le = x.to_little_endian();
     // Safety:
     // Created from a valid Table for this object
@@ -401,7 +401,7 @@ impl<'a> Color {
       core::ptr::copy_nonoverlapping(
         &x_le as *const _ as *const u8,
         self.0[3..].as_mut_ptr(),
-        core::mem::size_of::<<i8 as EndianScalar>::Scalar>(),
+        core::mem::size_of::<<u8 as EndianScalar>::Scalar>(),
       );
     }
   }
@@ -1253,8 +1253,7 @@ impl<'a> flatbuffers::Follow<'a> for CGChangeMoveDirectionNoti<'a> {
 }
 
 impl<'a> CGChangeMoveDirectionNoti<'a> {
-  pub const VT_ACTOR_IDX: flatbuffers::VOffsetT = 4;
-  pub const VT_DIRECTION: flatbuffers::VOffsetT = 6;
+  pub const VT_DIRECTION: flatbuffers::VOffsetT = 4;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -1266,19 +1265,11 @@ impl<'a> CGChangeMoveDirectionNoti<'a> {
     args: &'args CGChangeMoveDirectionNotiArgs<'args>
   ) -> flatbuffers::WIPOffset<CGChangeMoveDirectionNoti<'bldr>> {
     let mut builder = CGChangeMoveDirectionNotiBuilder::new(_fbb);
-    builder.add_actor_idx(args.actor_idx);
     if let Some(x) = args.direction { builder.add_direction(x); }
     builder.finish()
   }
 
 
-  #[inline]
-  pub fn actor_idx(&self) -> u64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<u64>(CGChangeMoveDirectionNoti::VT_ACTOR_IDX, Some(0)).unwrap()}
-  }
   #[inline]
   pub fn direction(&self) -> Option<&'a Vec2> {
     // Safety:
@@ -1295,21 +1286,18 @@ impl flatbuffers::Verifiable for CGChangeMoveDirectionNoti<'_> {
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
-     .visit_field::<u64>("actor_idx", Self::VT_ACTOR_IDX, false)?
      .visit_field::<Vec2>("direction", Self::VT_DIRECTION, false)?
      .finish();
     Ok(())
   }
 }
 pub struct CGChangeMoveDirectionNotiArgs<'a> {
-    pub actor_idx: u64,
     pub direction: Option<&'a Vec2>,
 }
 impl<'a> Default for CGChangeMoveDirectionNotiArgs<'a> {
   #[inline]
   fn default() -> Self {
     CGChangeMoveDirectionNotiArgs {
-      actor_idx: 0,
       direction: None,
     }
   }
@@ -1320,10 +1308,6 @@ pub struct CGChangeMoveDirectionNotiBuilder<'a: 'b, 'b, A: flatbuffers::Allocato
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> CGChangeMoveDirectionNotiBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_actor_idx(&mut self, actor_idx: u64) {
-    self.fbb_.push_slot::<u64>(CGChangeMoveDirectionNoti::VT_ACTOR_IDX, actor_idx, 0);
-  }
   #[inline]
   pub fn add_direction(&mut self, direction: &Vec2) {
     self.fbb_.push_slot_always::<&Vec2>(CGChangeMoveDirectionNoti::VT_DIRECTION, direction);
@@ -1346,7 +1330,6 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> CGChangeMoveDirectionNotiBuilde
 impl core::fmt::Debug for CGChangeMoveDirectionNoti<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let mut ds = f.debug_struct("CGChangeMoveDirectionNoti");
-      ds.field("actor_idx", &self.actor_idx());
       ds.field("direction", &self.direction());
       ds.finish()
   }

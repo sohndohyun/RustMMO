@@ -35,7 +35,6 @@ table GCRemoveActorNoti {
 }
 
 table CGChangeMoveDirectionNoti {
-    actor_idx:ulong;
     direction:Vec2;
 }
 

@@ -72,7 +72,7 @@ impl World {
         color: Option<Color>,
         sender: Sender<Rc<RefCell<WorldNotify>>>,
     ) {
-        if !self.response_sender.contains_key(&user_idx) {
+        if self.response_sender.contains_key(&user_idx) {
             return;
         }
 
