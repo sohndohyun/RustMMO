@@ -48,8 +48,8 @@ impl Session {
         if self.pending_disconnect == true {
             return;
         }
-        let _ = self.send_message(0, "".into());
         self.pending_disconnect = true;
+        _ = self.to_send_tx.send((0, Vec::new()));
     }
 }
 

@@ -5,3 +5,6 @@ flatc --gen-all --gen-onefile --csharp -o schema/generated schema/src/protocol.f
 set SOURCE_PATH=schema\generated\protocol_generated.rs
 set DEST_DIR=mmp_prototype\src\
 copy "%SOURCE_PATH%" "%DEST_DIR%"
+
+set DEST_DIR=virtual_agent\src\
+copy "%SOURCE_PATH%" "%DEST_DIR%"

@@ -27,7 +27,7 @@ pub struct App {
 
 
 impl App {
-    pub async fn create(str_addr: String) -> Result<App, Box<dyn std::error::Error>> {
+    pub async fn create(str_addr: String) -> Result<App, std::io::Error> {
         let socket = TcpStream::connect(str_addr).await?;
         let (rh, wh) = socket.into_split();
         let (to_main_tx, to_main_rx) = mpsc::unbounded_channel();
@@ -65,7 +65,8 @@ impl App {
             return Ok(());
         }
         self.pending_disconnect = true;
-        self.send_message(0, "".into())
+        self.to_send_tx.send((0, Vec::new()))?;
+        Ok(())
     }
 
     async fn receive_process(mut rh: OwnedReadHalf, to_main_tx: UnboundedSender<Callback>) {
