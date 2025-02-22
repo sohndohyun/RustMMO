@@ -13,7 +13,7 @@ use protocol_generated::nexus::{Color, GCJoinRes, GCLoginRes, PacketType, Server
 use rand::{rngs::SmallRng, Rng, RngCore, SeedableRng};
 use tokio::{task::JoinSet, time::sleep};
 
-const AGENT_COUNT: u32 = 100;
+const AGENT_COUNT: u32 = 500;
 const FRAME_TIME: Duration = Duration::from_millis(8);
 
 fn hash_vec_u8(data: &[u8]) -> u64 {
@@ -67,6 +67,7 @@ async fn virtual_agent(index: u32, mut rng: SmallRng) {
         );
 
         let mut actor_idx: Option<u64> = None;
+        let mut current_direction = Vec2::new(0., 0.);
 
         _ = app.send_message(
             PacketType::CG_LOGIN_REQ.0,
@@ -93,16 +94,16 @@ async fn virtual_agent(index: u32, mut rng: SmallRng) {
                         }
                         PacketType::GC_JOIN_RES => {
                             actor_idx = on_gc_join_res(&mut app, &mut builder, message, color);
-                            println!("joined!")
+                            //println!("joined!")
                         }
                         PacketType::GC_SPAWN_ACTOR_NOTI => {
-                            println!("spawn spawn!");
+                            //println!("spawn spawn!");
                         }
                         PacketType::GC_REMOVE_ACTOR_NOTI => {
-                            println!("remove remove!");
+                            //println!("remove remove!");
                         }
                         PacketType::GC_CHANGE_MOVE_DIRECTION_NOTI => {
-                            println!("move move!");
+                            //println!("move move!");
                         }
                         _ => return,
                     },
@@ -116,7 +117,6 @@ async fn virtual_agent(index: u32, mut rng: SmallRng) {
             }
 
             if flag == false {
-                println!("disconnected! need to join again!");
                 break;
             }
 
@@ -124,18 +124,21 @@ async fn virtual_agent(index: u32, mut rng: SmallRng) {
                 sleep(FRAME_TIME).await;
             } else {
                 // 여기부터는 로그인이 된 상태임. 마음대로 하자.
-                let random_p = rng.next_u32() % 100;
-                if random_p > 2 {
-                    let _ = app.send_message(
-                        PacketType::CG_CHANGE_MOVE_DIRECTION_NOTI.0,
-                        build_cg_change_move_direction_noti(&mut builder, random_direction(&mut rng)),
-                    );
+                let random_p = rng.next_u32() % 10000;
+                if random_p > 1 {
+                    let new_direction = random_direction(&mut rng);
+                    if new_direction == current_direction {
+                        let _ = app.send_message(
+                            PacketType::CG_CHANGE_MOVE_DIRECTION_NOTI.0,
+                            build_cg_change_move_direction_noti(&mut builder, random_direction(&mut rng)),
+                        );
+                        current_direction = new_direction;
+                    }
                 } else {
                     _ = app.disconnect();
-                    println!("try disconnect!");
                 }
 
-                let random_duration: u64 = rng.random_range(5000..10000);
+                let random_duration: u64 = rng.random_range(100..1000);
                 
                 sleep(Duration::from_millis(random_duration)).await;
             }
