@@ -150,9 +150,6 @@ impl App {
                 }
             }
         }
-
-        // log...
-        println!("Connection send process ended");
     }
 
 }
