@@ -1,3 +1,5 @@
+use flatbuffers::FlatBufferBuilder;
+
 use crate::protocol_generated::nexus::*;
 use crate::build_packet::build_gc_spawn_character_noti;
 
@@ -51,7 +53,7 @@ impl WorldPlayerCharacter {
         self.position.set_y(y);
     }
 
-    pub fn into_spawn_noti_vec(&self) -> Vec<u8> {
-        build_gc_spawn_character_noti(self.actor_idx, self.name.clone(), &self.color, self.speed, &self.position, &self.direction)
+    pub fn into_spawn_noti_vec<'a>(&self, builder: &mut FlatBufferBuilder<'a>) -> Vec<u8> {
+        build_gc_spawn_character_noti(builder, self.actor_idx, self.name.clone(), &self.color, self.speed, &self.position, &self.direction)
     }
 }

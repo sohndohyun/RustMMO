@@ -1,11 +1,12 @@
+use flatbuffers::FlatBufferBuilder;
 use rand::rngs::ThreadRng;
 use rand::Rng;
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
+use std::sync::Arc;
 
+use crate::build_packet::*;
 use crate::protocol_generated::nexus::*;
-use crate::single_channel::mpsc::{Receiver, Sender};
+use crate::single_channel::mpsc::*;
 use crate::world::player_character::WorldPlayerCharacter;
 use crate::world::world_enum::{WorldNotify, WorldRequest};
 
@@ -17,7 +18,9 @@ pub struct World {
     user_actor_idx: HashMap<u64, u64>,
 
     request_receiver: Receiver<WorldRequest>,
-    response_sender: HashMap<u64, Sender<Rc<RefCell<WorldNotify>>>>,
+    response_sender: HashMap<u64, Sender<WorldNotify>>,
+
+    builder: FlatBufferBuilder<'static>,
 }
 
 impl World {
@@ -30,6 +33,8 @@ impl World {
             user_actor_idx: HashMap::new(),
             request_receiver: receiver,
             response_sender: HashMap::new(),
+
+            builder: FlatBufferBuilder::with_capacity(1024),
         }
     }
 
@@ -70,7 +75,7 @@ impl World {
         user_idx: u64,
         name: Option<String>,
         color: Option<Color>,
-        sender: Sender<Rc<RefCell<WorldNotify>>>,
+        sender: Sender<WorldNotify>,
     ) {
         if self.response_sender.contains_key(&user_idx) {
             return;
@@ -87,21 +92,21 @@ impl World {
         let character =
             WorldPlayerCharacter::new(actor_idx, name, color, speed, position, direction);
 
-        self.broadcast_notify(WorldNotify::SomeoneJoin {
-            character: character.into_spawn_noti_vec(),
-        });
+        let packet: Arc<[u8]> = character.into_spawn_noti_vec(&mut self.builder).into();
+        self.broadcast_notify(PacketType::GC_SPAWN_ACTOR_NOTI, packet);
+
         self.actors.insert(actor_idx, character);
         self.user_actor_idx.insert(user_idx, actor_idx);
 
-        sender.send(Rc::new(RefCell::new(WorldNotify::CurrentWorldInfo {
+        sender.send(WorldNotify::CurrentWorldInfo {
             hash_key,
             actor_idx,
             characters: self
                 .actors
                 .values()
-                .map(|actor| actor.into_spawn_noti_vec())
+                .map(|actor| actor.into_spawn_noti_vec(&mut self.builder).into())
                 .collect(),
-        })));
+        });
         self.response_sender.insert(user_idx, sender);
     }
 
@@ -110,7 +115,9 @@ impl World {
             if let Some(character) = self.actors.get_mut(&actor_idx) {
                 character.change_direction(direction);
                 let position = character.position;
-                self.broadcast_notify(WorldNotify::ChangeMoveDirection { actor_idx: *actor_idx, direction, position });
+
+                let packet = build_gc_change_move_direction_noti(&mut self.builder, *actor_idx, &direction, &position).into();
+                self.broadcast_notify(PacketType::GC_CHANGE_MOVE_DIRECTION_NOTI, packet);
             }
         }
     }
@@ -121,16 +128,19 @@ impl World {
 
         if let Some(actor_idx) = self.user_actor_idx.get(&user_idx) {
             self.actors.remove(&actor_idx);
-            self.broadcast_notify(WorldNotify::RemoveActor { actor_idx: *actor_idx });
+
+            let packet = build_gc_remove_actor_noti(&mut self.builder, *actor_idx).into();
+            self.broadcast_notify(PacketType::GC_REMOVE_ACTOR_NOTI, packet);
         }
 
         self.user_actor_idx.remove(&user_idx);
     }
 
-    fn broadcast_notify(&self, notify: WorldNotify) {
-        let rc_notify = Rc::new(RefCell::new(notify));
+    fn broadcast_notify(&mut self, packet_type: PacketType, packet: Arc<[u8]>) {
         for sender in self.response_sender.values() {
-            sender.send(rc_notify.clone());
+            sender.send(WorldNotify::Broadcast {
+                packet_type, packet: packet.clone()
+            });
         }
     }
 

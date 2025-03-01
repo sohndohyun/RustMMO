@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::sync::Arc;
 
 use dsnet::server::Session;
@@ -22,7 +20,7 @@ pub struct GameUser {
 
     net_state: NetState,
     command_sender: Sender<WorldRequest>,
-    response_receiver: Option<Receiver<Rc<RefCell<WorldNotify>>>>,
+    response_receiver: Option<Receiver<WorldNotify>>,
 
     user_idx: u64,
 
@@ -69,30 +67,23 @@ impl GameUser {
         }
     }
 
-    fn process_notifications(&mut self, noti: &mut Receiver<Rc<RefCell<WorldNotify>>>) -> bool {
+    fn process_notifications(&mut self, noti: &mut Receiver<WorldNotify>) -> bool {
         loop {
             match noti.try_receive() {
-                Ok(rc_notify) => self.handle_notification(rc_notify),
+                Ok(notify) => match notify {
+                    WorldNotify::CurrentWorldInfo {
+                        hash_key,
+                        actor_idx,
+                        characters,
+                    } => self.notify_world_info(hash_key, actor_idx, characters),
+                    WorldNotify::Broadcast {
+                        packet_type,
+                        packet,
+                    } => self.send_packet(packet_type, packet),
+                },
                 Err(ReceiveError::Empty) => return false,
                 Err(ReceiveError::Disconnected) => return true, // 연결 끊김 처리
             }
-        }
-    }
-
-    fn handle_notification(&mut self, rc_notify: Rc<RefCell<WorldNotify>>) {
-        match &*rc_notify.borrow() {
-            WorldNotify::CurrentWorldInfo {
-                hash_key,
-                actor_idx,
-                characters,
-            } => self.notify_world_info(hash_key, actor_idx, characters),
-            WorldNotify::SomeoneJoin { character } => self.notify_someone_join(character),
-            WorldNotify::ChangeMoveDirection {
-                actor_idx,
-                direction,
-                position,
-            } => self.notify_change_move_direction(actor_idx, direction, position),
-            WorldNotify::RemoveActor { actor_idx } => self.notify_remove_actor(actor_idx),
         }
     }
 
@@ -126,7 +117,7 @@ impl GameUser {
 
                     result = ServerCode::SUCCESS;
                 }
-                
+
                 let packet = build_gc_login_res(&mut self.builder, result);
                 self.send_packet(PacketType::GC_LOGIN_RES, packet.into());
             }
@@ -182,35 +173,16 @@ impl GameUser {
         }
     }
 
-    fn notify_world_info(&mut self, hash_key: &u64, actor_idx: &u64, characters: &Vec<Vec<u8>>) {
+    fn notify_world_info(&mut self, hash_key: u64, actor_idx: u64, characters: Vec<Arc<[u8]>>) {
         for character in characters {
-            self.send_packet(PacketType::GC_SPAWN_ACTOR_NOTI, character.to_vec().into());
+            self.send_packet(PacketType::GC_SPAWN_ACTOR_NOTI, character.clone());
         }
 
-        if let Some(index) = self.packet_hashes.iter().position(|&h| h == *hash_key) {
+        if let Some(index) = self.packet_hashes.iter().position(|&h| h == hash_key) {
             self.packet_hashes.remove(index);
-            let packet = build_gc_join_res(&mut self.builder, *actor_idx, ServerCode::SUCCESS);
+            let packet = build_gc_join_res(&mut self.builder, actor_idx, ServerCode::SUCCESS);
             self.send_packet(PacketType::GC_JOIN_RES, packet.into());
         }
-    }
-
-    fn notify_someone_join(&mut self, character: &Vec<u8>) {
-        self.send_packet(PacketType::GC_SPAWN_ACTOR_NOTI, character.to_vec().into());
-    }
-
-    fn notify_change_move_direction(&mut self, actor_idx: &u64, direction: &Vec2, position: &Vec2) {
-        let packet =
-            build_gc_change_move_direction_noti(&mut self.builder, *actor_idx, direction, position);
-
-        self.send_packet(PacketType::GC_CHANGE_MOVE_DIRECTION_NOTI, packet.into());
-    }
-
-    fn notify_remove_actor(&mut self, actor_idx: &u64) {
-        let packet = build_gc_remove_actor_noti(&mut self.builder, *actor_idx);
-        self.send_packet(
-            PacketType::GC_REMOVE_ACTOR_NOTI,
-            packet.into(),
-        );
     }
 
     pub fn pending_logout(&self) -> bool {

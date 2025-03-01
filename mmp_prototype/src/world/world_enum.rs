@@ -1,5 +1,4 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::protocol_generated::nexus::*;
 use crate::single_channel::mpsc::Sender;
@@ -10,7 +9,7 @@ pub enum WorldRequest {
         user_idx: u64,
         name: Option<String>,
         color: Option<Color>,
-        sender: Sender<Rc<RefCell<WorldNotify>>>,
+        sender: Sender<WorldNotify>,
     },
     ChangeMoveDirection {
         user_idx: u64,
@@ -22,8 +21,6 @@ pub enum WorldRequest {
 }
 
 pub enum WorldNotify {
-    CurrentWorldInfo { hash_key:u64, actor_idx: u64, characters: Vec<Vec<u8>> },
-    SomeoneJoin { character: Vec<u8> },
-    ChangeMoveDirection {  actor_idx: u64, direction: Vec2, position: Vec2},
-    RemoveActor { actor_idx: u64 }
+    CurrentWorldInfo { hash_key:u64, actor_idx: u64, characters: Vec<Arc<[u8]>> },
+    Broadcast { packet_type: PacketType, packet: Arc<[u8]> }
 }
