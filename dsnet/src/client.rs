@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::io::IoSlice;
+use std::sync::Arc;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
@@ -21,7 +22,7 @@ pub enum Callback {
 
 pub struct App {
     to_main_rx: UnboundedReceiver<Callback>,
-    to_send_tx: UnboundedSender<(u16, Vec<u8>)>,
+    to_send_tx: UnboundedSender<(u16, Arc<[u8]>)>,
     pending_disconnect: bool,
 }
 
@@ -51,7 +52,7 @@ impl App {
         }
     }
 
-    pub fn send_message(&mut self, packet_type: u16, message: Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn send_message(&mut self, packet_type: u16, message: Arc<[u8]>) -> Result<(), Box<dyn std::error::Error>> {
         if self.pending_disconnect == false {
             self.to_send_tx.send((packet_type, message))?;
             Ok(())
@@ -65,7 +66,7 @@ impl App {
             return Ok(());
         }
         self.pending_disconnect = true;
-        self.to_send_tx.send((0, Vec::new()))?;
+        self.to_send_tx.send((0, Arc::from([])))?;
         Ok(())
     }
 
@@ -110,7 +111,7 @@ impl App {
 
     async fn send_process(
         mut wh: OwnedWriteHalf,
-        mut to_send_rx: UnboundedReceiver<(u16, Vec<u8>)>,
+        mut to_send_rx: UnboundedReceiver<(u16, Arc<[u8]>)>,
     ) {
         let mut ring_buf = VecDeque::with_capacity(1024);
         let mut active = true;
@@ -118,7 +119,7 @@ impl App {
         while active || !ring_buf.is_empty() {
             if ring_buf.is_empty() {
                 if let Some((packet_type, message)) = to_send_rx.recv().await {
-                    active = push_message_with_header(packet_type, message, &mut ring_buf) > 0;
+                    active = push_message_with_header(packet_type, &message, &mut ring_buf) > 0;
                 } else {
                     active = false;
                 }
@@ -127,7 +128,7 @@ impl App {
             while active {
                 match to_send_rx.try_recv() {
                     Ok((packet_type, message)) => {
-                        active = push_message_with_header(packet_type, message, &mut ring_buf) > 0;
+                        active = push_message_with_header(packet_type, &message, &mut ring_buf) > 0;
                     }
                     Err(mpsc::error::TryRecvError::Disconnected) => active = false,
                     Err(mpsc::error::TryRecvError::Empty) => break,

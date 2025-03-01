@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::io::IoSlice;
+use std::sync::Arc;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
@@ -12,11 +13,11 @@ use crate::packet_functions::*;
 pub struct Session {
     idx: u64,
     pending_disconnect: bool,
-    to_send_tx: UnboundedSender<(u16, Vec<u8>)>,
+    to_send_tx: UnboundedSender<(u16, Arc<[u8]>)>,
 }
 
 impl Session {
-    fn new(idx: u64, to_send_tx: UnboundedSender<(u16, Vec<u8>)>) -> Session {
+    fn new(idx: u64, to_send_tx: UnboundedSender<(u16, Arc<[u8]>)>) -> Session {
         Session {
             idx,
             pending_disconnect: false,
@@ -34,7 +35,7 @@ impl Session {
     pub fn send_message(
         &self,
         packet_type: u16,
-        message: Vec<u8>,
+        message: Arc<[u8]>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         if self.pending_disconnect == false {
             self.to_send_tx.send((packet_type, message))?;
@@ -49,7 +50,7 @@ impl Session {
             return;
         }
         self.pending_disconnect = true;
-        _ = self.to_send_tx.send((0, Vec::new()));
+        _ = self.to_send_tx.send((0, Arc::from([])));
     }
 }
 
@@ -76,7 +77,7 @@ pub enum Callback {
 enum NetEvent {
     Accept {
         idx: u64,
-        to_send_tx: UnboundedSender<(u16, Vec<u8>)>,
+        to_send_tx: UnboundedSender<(u16, Arc<[u8]>)>,
     },
 
     Receive {
@@ -188,7 +189,7 @@ impl App {
     async fn send_process(
         mut wh: OwnedWriteHalf,
         idx: u64,
-        mut to_send_rx: UnboundedReceiver<(u16, Vec<u8>)>,
+        mut to_send_rx: UnboundedReceiver<(u16, Arc<[u8]>)>,
     ) {
         let mut ring_buf = VecDeque::with_capacity(1024);
         let mut active = true;
@@ -196,7 +197,7 @@ impl App {
         while active || !ring_buf.is_empty() {
             if ring_buf.is_empty() {
                 if let Some((packet_type, message)) = to_send_rx.recv().await {
-                    active = push_message_with_header(packet_type, message, &mut ring_buf) > 0;
+                    active = push_message_with_header(packet_type, &message, &mut ring_buf) > 0;
                 } else {
                     active = false;
                 }
@@ -205,7 +206,7 @@ impl App {
             while active {
                 match to_send_rx.try_recv() {
                     Ok((packet_type, message)) => {
-                        active = push_message_with_header(packet_type, message, &mut ring_buf) > 0;
+                        active = push_message_with_header(packet_type, &message, &mut ring_buf) > 0;
                     }
                     Err(mpsc::error::TryRecvError::Disconnected) => active = false,
                     Err(mpsc::error::TryRecvError::Empty) => break,

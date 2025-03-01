@@ -1,7 +1,9 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use dsnet::server::Session;
+use flatbuffers::FlatBufferBuilder;
 
 use crate::protocol_generated::nexus::*;
 use crate::single_channel::mpsc::{ReceiveError, Receiver, Sender};
@@ -26,6 +28,8 @@ pub struct GameUser {
 
     session: Session,
     packet_hashes: Vec<u64>,
+
+    builder: FlatBufferBuilder<'static>,
 }
 
 impl GameUser {
@@ -38,6 +42,8 @@ impl GameUser {
             user_idx: 0,
             session,
             packet_hashes: Vec::new(),
+
+            builder: FlatBufferBuilder::with_capacity(1024),
         }
     }
 
@@ -46,7 +52,9 @@ impl GameUser {
             PacketType::CG_LOGIN_REQ => self.on_cg_login_req(data),
             PacketType::CG_JOIN_REQ => self.on_cg_join_req(data),
             PacketType::CG_LOGOUT_NOTI => self.disconnect(),
-            PacketType::CG_CHANGE_MOVE_DIRECTION_NOTI => self.on_cg_change_move_direction_noti(data),
+            PacketType::CG_CHANGE_MOVE_DIRECTION_NOTI => {
+                self.on_cg_change_move_direction_noti(data)
+            }
             _ => {
                 panic!("not allowed packet! {}", packet_type);
             }
@@ -88,7 +96,7 @@ impl GameUser {
         }
     }
 
-    fn send_packet(&self, packet_type: PacketType, payload: Vec<u8>) {
+    fn send_packet(&self, packet_type: PacketType, payload: Arc<[u8]>) {
         _ = self.session.send_message(packet_type.0, payload);
     }
 
@@ -118,8 +126,9 @@ impl GameUser {
 
                     result = ServerCode::SUCCESS;
                 }
-
-                self.send_packet(PacketType::GC_LOGIN_RES, build_gc_login_res(result));
+                
+                let packet = build_gc_login_res(&mut self.builder, result);
+                self.send_packet(PacketType::GC_LOGIN_RES, packet.into());
             }
             Err(e) => eprintln!("invalid_flatbuffer on_cg_login_req {:?}", e),
         }
@@ -175,30 +184,33 @@ impl GameUser {
 
     fn notify_world_info(&mut self, hash_key: &u64, actor_idx: &u64, characters: &Vec<Vec<u8>>) {
         for character in characters {
-            self.send_packet(PacketType::GC_SPAWN_ACTOR_NOTI, character.to_vec());
+            self.send_packet(PacketType::GC_SPAWN_ACTOR_NOTI, character.to_vec().into());
         }
+
         if let Some(index) = self.packet_hashes.iter().position(|&h| h == *hash_key) {
             self.packet_hashes.remove(index);
-            self.send_packet(
-                PacketType::GC_JOIN_RES,
-                build_gc_join_res(*actor_idx, ServerCode::SUCCESS),
-            );
+            let packet = build_gc_join_res(&mut self.builder, *actor_idx, ServerCode::SUCCESS);
+            self.send_packet(PacketType::GC_JOIN_RES, packet.into());
         }
     }
 
     fn notify_someone_join(&mut self, character: &Vec<u8>) {
-        self.send_packet(PacketType::GC_SPAWN_ACTOR_NOTI, character.to_vec());
+        self.send_packet(PacketType::GC_SPAWN_ACTOR_NOTI, character.to_vec().into());
     }
 
     fn notify_change_move_direction(&mut self, actor_idx: &u64, direction: &Vec2, position: &Vec2) {
-        self.send_packet(
-            PacketType::GC_CHANGE_MOVE_DIRECTION_NOTI,
-            build_gc_change_move_direction_noti(*actor_idx, direction, position),
-        );
+        let packet =
+            build_gc_change_move_direction_noti(&mut self.builder, *actor_idx, direction, position);
+
+        self.send_packet(PacketType::GC_CHANGE_MOVE_DIRECTION_NOTI, packet.into());
     }
 
     fn notify_remove_actor(&mut self, actor_idx: &u64) {
-        self.send_packet(PacketType::GC_REMOVE_ACTOR_NOTI, build_gc_remove_actor_noti(*actor_idx));
+        let packet = build_gc_remove_actor_noti(&mut self.builder, *actor_idx);
+        self.send_packet(
+            PacketType::GC_REMOVE_ACTOR_NOTI,
+            packet.into(),
+        );
     }
 
     pub fn pending_logout(&self) -> bool {

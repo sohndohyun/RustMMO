@@ -41,7 +41,7 @@ pub fn check_and_pop_packet(ring: &mut VecDeque<u8>) -> Option<(u16, Vec<u8>)>{
     Some((packet_type, message))
 }
 
-pub fn push_message_with_header(packet_type: u16, message: Vec<u8>, ring: &mut VecDeque<u8>) -> usize {
+pub fn push_message_with_header(packet_type: u16, message: &[u8], ring: &mut VecDeque<u8>) -> usize {
     if message.is_empty() {
         0
     } else {

@@ -6,3 +6,4 @@ authors = ["dohyun sohn"]
 
 [dependencies]
 tokio = { version = "1.43.0", features = ["full"] }
+flatbuffers = "25.1.24"

@@ -29,13 +29,12 @@ fn random_direction(rng: &mut SmallRng) -> Vec2 {
     let x = x as f32;
     let y = y as f32;
 
-    let distance = f32::sqrt( x * x + y * y);
+    let distance = f32::sqrt(x * x + y * y);
     if distance == 0. {
         Vec2::new(x, y)
     } else {
         Vec2::new(x / distance, y / distance)
     }
-
 }
 
 #[tokio::main]
@@ -71,7 +70,7 @@ async fn virtual_agent(index: u32, mut rng: SmallRng) {
 
         _ = app.send_message(
             PacketType::CG_LOGIN_REQ.0,
-            build_cg_login_req(&mut builder, user_idx, name.clone()),
+            build_cg_login_req(&mut builder, user_idx, name.clone()).into(),
         );
 
         loop {
@@ -110,9 +109,12 @@ async fn virtual_agent(index: u32, mut rng: SmallRng) {
                     Callback::Disconnect => {
                         flag = false;
                         break;
-                    },
+                    }
                     Callback::Empty => break,
-                    Callback::Close => {flag = false; break},
+                    Callback::Close => {
+                        flag = false;
+                        break;
+                    }
                 }
             }
 
@@ -130,7 +132,11 @@ async fn virtual_agent(index: u32, mut rng: SmallRng) {
                     if new_direction == current_direction {
                         let _ = app.send_message(
                             PacketType::CG_CHANGE_MOVE_DIRECTION_NOTI.0,
-                            build_cg_change_move_direction_noti(&mut builder, random_direction(&mut rng)),
+                            build_cg_change_move_direction_noti(
+                                &mut builder,
+                                random_direction(&mut rng),
+                            )
+                            .into(),
                         );
                         current_direction = new_direction;
                     }
@@ -139,7 +145,7 @@ async fn virtual_agent(index: u32, mut rng: SmallRng) {
                 }
 
                 let random_duration: u64 = rng.random_range(100..1000);
-                
+
                 sleep(Duration::from_millis(random_duration)).await;
             }
         }
@@ -159,10 +165,13 @@ fn on_gc_login_res<'a>(
             if res.result() == ServerCode::FAILED {
                 _ = app.send_message(
                     PacketType::CG_LOGIN_REQ.0,
-                    build_cg_login_req(builder, user_idx, name),
+                    build_cg_login_req(builder, user_idx, name).into(),
                 );
             } else {
-                _ = app.send_message(PacketType::CG_JOIN_REQ.0, build_cg_join_req(builder, color))
+                _ = app.send_message(
+                    PacketType::CG_JOIN_REQ.0,
+                    build_cg_join_req(builder, color).into(),
+                )
             }
         }
         Err(e) => eprintln!("invalid_flatbuffer on_gc_login_res {:?}", e),
@@ -178,7 +187,10 @@ fn on_gc_join_res<'a>(
     match flatbuffers::root::<GCJoinRes>(&message) {
         Ok(res) => {
             if res.result() == ServerCode::FAILED {
-                _ = app.send_message(PacketType::CG_JOIN_REQ.0, build_cg_join_req(builder, color))
+                _ = app.send_message(
+                    PacketType::CG_JOIN_REQ.0,
+                    build_cg_join_req(builder, color).into(),
+                )
             } else {
                 return Some(res.actor_idx());
             }

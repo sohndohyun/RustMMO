@@ -15,25 +15,30 @@ pub fn deref_color(opt_color: Option<&Color>) -> Option<Color> {
     }
 }
 
-pub fn build_gc_login_res(result: ServerCode) -> Vec<u8> {
-    let mut builder = FlatBufferBuilder::with_capacity(32);
+pub fn build_gc_login_res<'a>(builder: &mut FlatBufferBuilder<'a>, result: ServerCode) -> Vec<u8> {
+    builder.reset();
 
-    let root = GCLoginRes::create(&mut builder, &GCLoginResArgs { result });
-
-    builder.finish(root, None);
-    builder.finished_data().to_vec()
-}
-
-pub fn build_gc_join_res(actor_idx: u64, result: ServerCode) -> Vec<u8> {
-    let mut builder = FlatBufferBuilder::with_capacity(32);
-
-    let root = GCJoinRes::create(&mut builder, &GCJoinResArgs { actor_idx, result });
+    let root = GCLoginRes::create(builder, &GCLoginResArgs { result });
 
     builder.finish(root, None);
     builder.finished_data().to_vec()
 }
 
-pub fn build_gc_spawn_character_noti(
+pub fn build_gc_join_res<'a>(
+    builder: &mut FlatBufferBuilder<'a>,
+    actor_idx: u64,
+    result: ServerCode,
+) -> Vec<u8> {
+    builder.reset();
+
+    let root = GCJoinRes::create(builder, &GCJoinResArgs { actor_idx, result });
+
+    builder.finish(root, None);
+    builder.finished_data().to_vec()
+}
+
+pub fn build_gc_spawn_character_noti<'a>(
+    builder: &mut FlatBufferBuilder<'a>,
     actor_idx: u64,
     name: Option<String>,
     color: &Option<Color>,
@@ -41,12 +46,12 @@ pub fn build_gc_spawn_character_noti(
     position: &Vec2,
     direction: &Vec2,
 ) -> Vec<u8> {
-    let mut builder = FlatBufferBuilder::with_capacity(256);
+    builder.reset();
 
     let name_fb = name.as_ref().map(|n| builder.create_string(n));
 
     let root = GCSpawnCharacterNoti::create(
-        &mut builder,
+        builder,
         &GCSpawnCharacterNotiArgs {
             actor_idx,
             name: name_fb,
@@ -61,23 +66,27 @@ pub fn build_gc_spawn_character_noti(
     builder.finished_data().to_vec()
 }
 
-pub fn build_gc_remove_actor_noti(actor_idx: u64) -> Vec<u8> {
-    let mut builder = FlatBufferBuilder::with_capacity(16);
-    let root = GCRemoveActorNoti::create(&mut builder, &GCRemoveActorNotiArgs { actor_idx });
+pub fn build_gc_remove_actor_noti<'a>(
+    builder: &mut FlatBufferBuilder<'a>,
+    actor_idx: u64,
+) -> Vec<u8> {
+    builder.reset();
+    let root = GCRemoveActorNoti::create(builder, &GCRemoveActorNotiArgs { actor_idx });
 
     builder.finish(root, None);
     builder.finished_data().to_vec()
 }
 
-pub fn build_gc_change_move_direction_noti(
+pub fn build_gc_change_move_direction_noti<'a>(
+    builder: &mut FlatBufferBuilder<'a>,
     actor_idx: u64,
     direction: &Vec2,
     position: &Vec2,
 ) -> Vec<u8> {
-    let mut builder = FlatBufferBuilder::with_capacity(128);
+    builder.reset();
 
     let root = GCChangeMoveDirectionNoti::create(
-        &mut builder,
+        builder,
         &GCChangeMoveDirectionNotiArgs {
             actor_idx,
             direction: Some(direction),
