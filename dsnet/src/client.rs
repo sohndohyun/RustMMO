@@ -1,5 +1,4 @@
 use std::collections::VecDeque;
-use std::io::IoSlice;
 use std::sync::Arc;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};

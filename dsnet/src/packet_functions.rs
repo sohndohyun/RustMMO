@@ -6,7 +6,6 @@ packet_type: u16,       2byte
 
 const HEADER_SIZE: usize = 4;
 
-use core::slice;
 use std::{collections::VecDeque, io::IoSlice, sync::Arc};
 
 pub fn check_and_pop_packet(ring: &mut VecDeque<u8>) -> Option<(u16, Vec<u8>)>{
