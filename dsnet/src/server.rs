@@ -191,13 +191,14 @@ impl App {
         idx: u64,
         mut to_send_rx: UnboundedReceiver<(u16, Arc<[u8]>)>,
     ) {
-        let mut ring_buf = VecDeque::with_capacity(1024);
+        let mut slice_queue = VecDeque::with_capacity(16);
         let mut active = true;
+        let mut offset: usize = 0;
 
-        while active || !ring_buf.is_empty() {
-            if ring_buf.is_empty() {
+        while active || !slice_queue.is_empty() {
+            if slice_queue.is_empty() {
                 if let Some((packet_type, message)) = to_send_rx.recv().await {
-                    active = push_message_with_header(packet_type, &message, &mut ring_buf) > 0;
+                    active = push_message_with_header(packet_type, message, &mut slice_queue) > 0;
                 } else {
                     active = false;
                 }
@@ -206,21 +207,31 @@ impl App {
             while active {
                 match to_send_rx.try_recv() {
                     Ok((packet_type, message)) => {
-                        active = push_message_with_header(packet_type, &message, &mut ring_buf) > 0;
+                        active = push_message_with_header(packet_type, message, &mut slice_queue) > 0;
                     }
                     Err(mpsc::error::TryRecvError::Disconnected) => active = false,
                     Err(mpsc::error::TryRecvError::Empty) => break,
                 }
             }
 
-            if !ring_buf.is_empty() {
-                let (first, second) = ring_buf.as_slices();
+            if !slice_queue.is_empty() {
                 // 슬라이스를 IoSlice로 감싸기
-                let slices = [IoSlice::new(first), IoSlice::new(second)];
+                let io_slices = slice_queue_to_io_slice(&slice_queue, offset);
 
-                match wh.write_vectored(&slices).await {
-                    Ok(send_size) => {
-                        ring_buf.drain(..send_size);
+                let write_result = wh.write_vectored(&io_slices).await;
+
+                match write_result {
+                    Ok(mut send_size) => {
+                        while let Some(slice) = slice_queue.front() {
+                            let slice_len = slice.len() - offset;
+                            if slice_len <= send_size {
+                                send_size -= slice_len;
+                                offset = 0;
+                                slice_queue.pop_front();
+                            }
+                        }
+
+                        offset = send_size;
                     }
                     Err(e) => {
                         eprintln!("failed to write to `{}`: {:?}", idx, e);

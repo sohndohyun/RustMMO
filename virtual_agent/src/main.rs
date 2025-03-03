@@ -13,7 +13,7 @@ use protocol_generated::nexus::{Color, GCJoinRes, GCLoginRes, PacketType, Server
 use rand::{rngs::SmallRng, Rng, RngCore, SeedableRng};
 use tokio::{task::JoinSet, time::sleep};
 
-const AGENT_COUNT: u32 = 500;
+const AGENT_COUNT: u32 = 1000;
 const FRAME_TIME: Duration = Duration::from_millis(8);
 
 fn hash_vec_u8(data: &[u8]) -> u64 {
@@ -144,9 +144,7 @@ async fn virtual_agent(index: u32, mut rng: SmallRng) {
                     _ = app.disconnect();
                 }
 
-                let random_duration: u64 = rng.random_range(100..1000);
-
-                sleep(Duration::from_millis(random_duration)).await;
+                sleep(Duration::from_millis(rng.random_range(10..500))).await;
             }
         }
     }
