@@ -82,8 +82,8 @@ impl World {
         }
 
         let position = Vec2::new(
-            self.rnd.random_range(-100.0..100.0),
-            self.rnd.random_range(-100.0..100.0),
+            self.rnd.random_range(-10.0..10.0),
+            self.rnd.random_range(-10.0..10.0),
         );
         let direction = Vec2::new(0., 0.);
         let speed: f32 = 10.;

@@ -13,7 +13,7 @@ use protocol_generated::nexus::{Color, GCJoinRes, GCLoginRes, PacketType, Server
 use rand::{rngs::SmallRng, Rng, RngCore, SeedableRng};
 use tokio::{task::JoinSet, time::sleep};
 
-const AGENT_COUNT: u32 = 1000;
+const AGENT_COUNT: u32 = 100;
 const FRAME_TIME: Duration = Duration::from_millis(8);
 
 fn hash_vec_u8(data: &[u8]) -> u64 {
