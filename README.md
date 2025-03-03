@@ -64,4 +64,7 @@ Recv부분에서는 우선 읽은 데이터를 `VecDeque<u8>` 링버퍼에 저�
 ## 테스트 클라이언트
 [링크](https://1drv.ms/f/c/c07419687adffcbf/EgMjW3yVjGFDsWEYxCVNWPwBAcQ9vSUJ_fANbXJvibK_gw?e=yXXIvR)
 
+위 링크를 통해 클라이언트를 설치후 실행하면 실제 어떻게 동작하는지를 볼 수 있습니다.
 
+![test_client](/readme_resource/test_client.webp)
+mmp_server와 virtual_agent를 실행한 뒤 테스트 클라이언트를 실행한 모습입니다.
