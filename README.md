@@ -80,7 +80,7 @@ Recv부분에서는 우선 읽은 데이터를 `VecDeque<u8>` 링버퍼에 저�
 `WorldCommand`를 처리하고 월드의 변경점을 `WorldResponse`를 통해 GameUser에 전달합니다.
 
 ## 테스트 클라이언트
-[링크](https://1drv.ms/f/c/c07419687adffcbf/EgMjW3yVjGFDsWEYxCVNWPwBAcQ9vSUJ_fANbXJvibK_gw?e=yXXIvR)
+[링크](https://1drv.ms/u/c/c07419687adffcbf/EVhBO0vJoM1FpQjh7oyeuWMBIqZ5G4lIC3ufhDnuoWINkg?e=iaQpYE)
 
 위 링크를 통해 클라이언트를 설치후 실행하면 실제 어떻게 동작하는지를 볼 수 있습니다.
 
